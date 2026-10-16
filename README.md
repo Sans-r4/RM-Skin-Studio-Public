@@ -46,3 +46,13 @@ Frontend estático de RM Skin Studio. Está construido con HTML, CSS y JavaScrip
 - Comportamiento del header fijo y selector de los siete idiomas en móvil y escritorio.
 
 No pongas secretos OAuth, PayPal, Turnstile Secret ni claves de cifrado en el repositorio público. La clave web Firebase y la Site Key Turnstile sí son de configuración cliente; su seguridad depende de la validación del backend y del origen autorizado.
+
+
+### Códigos de regalo
+El panel Admin tiene una pestaña Códigos regalo. Tras aplicar la migración privada `0007_gift_codes.sql`, puedes crear llaves de 20 dígitos para créditos o Premium. Copia el código al crearlo; por seguridad solo se conserva su hash. El usuario canjea la llave desde Ajustes.
+
+### Rainy / WBIO
+La página Descargables enlaza por separado a la colección externa https://sans-r4.github.io/wbio/. No es el mismo catálogo de skins y exports con créditos de RM Skin Studio.
+
+### Recompensas por anuncios
+No premies impresiones/clics de los banners normales de Adsterra usando solo JavaScript. Para dar créditos por ver anuncios, utiliza un proveedor de rewarded ads con confirmación verificable del lado servidor y calcula la recompensa usando ingresos netos reales.

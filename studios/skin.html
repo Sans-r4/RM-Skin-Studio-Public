@@ -11,6 +11,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
         
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow: hidden; }
+        header, header > div { box-sizing:border-box; max-width:100%; } header { padding-top:10px!important; padding-bottom:10px!important; min-height:76px; height:auto!important; flex-wrap:wrap; row-gap:8px; } header > div { min-width:0; flex-wrap:wrap; } header button, header a { max-width:100%; min-height:38px; white-space:normal; overflow-wrap:anywhere; } #btn-add-font { flex:0 1 auto; } @media(max-width:760px){body{overflow:auto} header{position:sticky;top:0;z-index:13000;background:#0f172a;padding:12px!important} header > div{gap:7px!important} #btn-add-font{width:auto;max-width:100%;font-size:12px} }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
@@ -46,7 +47,7 @@
             </button>
             <input type="file" id="importZipFile" class="hidden" accept=".zip" onchange="importZIP(event)">
 
-            <button onclick="document.getElementById('importFontFile').click()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 transition flex gap-2 items-center border border-slate-600" id="btn-add-font">
+            <button onclick="document.getElementById('importFontFile').click()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 transition flex gap-2 items-center border border-slate-600" id="btn-add-font" style="max-width:100%;min-width:0;flex:0 1 auto;white-space:normal;overflow-wrap:anywhere">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg> <span id="lbl-add-font">Fuente .ttf</span>
             </button>
             <input type="file" id="importFontFile" class="hidden" accept=".ttf,.otf" onchange="importFont(event)">

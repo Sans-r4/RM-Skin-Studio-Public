@@ -48,7 +48,7 @@
     const header = document.querySelector('header');
     const bar = document.createElement('div');
     bar.className = 'rm-studio-toolbar';
-    bar.innerHTML = '<a class="rm-studio-brand" href="/index.html" aria-label="RM Skin Studio, inicio">RM Skin Studio</a><span class="rm-studio-credits">◈ <b id="rm-studio-credits">—</b> créditos</span><span id="rm-studio-username" class="rm-studio-username">Cuenta</span><a href="/settings.html">Ajustes</a><a href="/pricing.html">Premium</a><button class="rmss-lang-toggle" type="button" aria-label="Cambiar idioma">ES</button><a href="/studios/skin.html">Skin</a><a href="/studios/calendar.html">Calendar</a><a href="/studios/gif.html">GIF</a><button type="button" id="rm-save-project">Guardar proyecto</button><a href="/index.html">Panel</a><button type="button" id="rm-studio-logout">Salir</button>';
+    bar.innerHTML = '<a class="rm-studio-brand" href="/index.html" aria-label="RM Skin Studio, inicio">RM Skin Studio</a><a href="/studios/skin.html">Skin</a><a href="/studios/calendar.html">Calendar</a><a href="/studios/gif.html">GIF</a><button type="button" id="rm-save-project">Guardar proyecto</button><button type="button" class="rmss-profile-toggle rmss-studio-profile-toggle" aria-expanded="false">◉ <span id="rm-studio-username">Cuenta</span> · <b>◈ <span id="rm-studio-credits">—</span></b> ▾</button><div class="rmss-profile-menu rmss-studio-profile-menu" hidden><a href="/settings.html">Ajustes de cuenta</a><a href="/pricing.html">Precios y Premium</a><button type="button" class="rmss-lang-toggle">ES · Idioma</button><button type="button" id="rm-studio-logout">Cerrar sesión</button></div><a href="/index.html">Panel</a>';
     if (header) {
       const group = header.querySelector('div.flex.gap-2') || header.querySelector('.header-account') || header;
       // Skin and Calendar already render the canonical brand link in the left side of the header.
@@ -60,6 +60,7 @@
     bar.classList.add('rm-studio-toolbar-floating');
     document.body.insertBefore(bar, document.body.firstChild);
   }
+  document.addEventListener('click', event => { const toggle=event.target.closest('.rmss-studio-profile-toggle'); const menu=document.querySelector('.rmss-studio-profile-menu'); if(toggle && menu){const open=menu.hidden;menu.hidden=!open;toggle.setAttribute('aria-expanded',String(open));} else if(!event.target.closest('.rmss-studio-profile-menu') && menu){menu.hidden=true;document.querySelectorAll('.rmss-studio-profile-toggle').forEach(b=>b.setAttribute('aria-expanded','false'));} });
   function currentPayload() {
     if (typeof window.__RM_GET_STATE !== 'function') throw new Error('Este estudio no ha preparado los datos del proyecto.');
     return window.__RM_GET_STATE();

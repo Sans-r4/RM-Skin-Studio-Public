@@ -25,14 +25,14 @@
         <a href="/studios/calendar.html">Calendar</a>
         <a href="/studios/gif.html">GIF Studio</a>
       </nav>
-      <div class="header-account">
-        <span class="credit-pill hidden" id="header-credit-pill">◈ <span id="header-credit-count">—</span> créditos</span>
-        <span id="header-username" class="username muted"></span>
-        <span id="header-premium-badge" class="rmss-premium-label hidden">Premium</span>
-        <a class="rmss-header-link" href="/settings.html">Ajustes</a>
-        <a class="rmss-header-link" href="/pricing.html">Precios</a>
-        <button class="rmss-lang-toggle" type="button" aria-label="Cambiar idioma" title="Cambiar idioma">ES</button>
-        <button id="logout-btn" class="quiet small hidden">Salir</button>
+      <div class="header-account rmss-account-wrap">
+        <button type="button" class="rmss-profile-toggle" aria-expanded="false" aria-controls="rmss-profile-menu"><span class="rmss-avatar" aria-hidden="true">◉</span><span id="header-username" class="username muted">Cuenta</span><span class="rmss-caret" aria-hidden="true">▾</span></button>
+        <div class="rmss-profile-menu" id="rmss-profile-menu" hidden>
+          <div class="rmss-profile-summary"><strong id="rmss-menu-username">Cuenta</strong><span class="credit-pill" id="header-credit-pill">◈ <span id="header-credit-count">—</span> créditos</span><span id="header-premium-badge" class="rmss-premium-label hidden">Premium</span></div>
+          <a href="/settings.html">Ajustes de cuenta</a><a href="/pricing.html">Precios y Premium</a><a href="/downloads.html">Mis descargables</a>
+          <button class="rmss-lang-toggle" type="button" aria-label="Cambiar idioma" title="Cambiar idioma">ES · Idioma</button>
+          <button id="logout-btn" class="quiet small hidden" type="button">Cerrar sesión</button>
+        </div>
       </div>
     </div>
   </header>

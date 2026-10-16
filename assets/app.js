@@ -3,6 +3,9 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const page = document.body.dataset.page || '';
+  document.addEventListener('click', event => { const toggle=event.target.closest('.rmss-profile-toggle'); const menus=[...document.querySelectorAll('.rmss-profile-menu')]; if(toggle){const menu=toggle.parentElement.querySelector('.rmss-profile-menu');const open=menu?.hidden;menus.forEach(m=>m.hidden=true);document.querySelectorAll('.rmss-profile-toggle').forEach(b=>b.setAttribute('aria-expanded','false'));if(menu){menu.hidden=!open;toggle.setAttribute('aria-expanded',String(!!open));}}else if(!event.target.closest('.rmss-profile-menu')){menus.forEach(m=>m.hidden=true);document.querySelectorAll('.rmss-profile-toggle').forEach(b=>b.setAttribute('aria-expanded','false'));}});
+  window.addEventListener('rmss:user-state', event => { const u=event.detail?.user; const name=u?.username||'Cuenta'; document.querySelectorAll('#header-username,#rmss-menu-username').forEach(n=>n.textContent=name); });
+
   const API_BASE = String(window.RMSS_CONFIG?.apiBaseUrl || '').replace(/\/+$/, '');
   const apiUrl = path => `${API_BASE}${path}`;
   let suspendHandling = false;
