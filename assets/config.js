@@ -1,6 +1,6 @@
 window.RMSS_CONFIG = Object.assign({
   apiBaseUrl: 'https://rm-skin-studio-backend-private.r4ksans.workers.dev',
-  turnstileSiteKey: 'PEGA_AQUI_LA_SITE_KEY_PUBLICA',
+  turnstileSiteKey: '0x4AAAAAAFYuVfADkWAAYGy5',
   firebase: {
     apiKey: 'AIzaSyBpgqian-NkKplkXb8HeoRoQLcYygbZg3k',
     authDomain: 'rm-skin-studio.firebaseapp.com',
