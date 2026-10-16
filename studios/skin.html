@@ -33,11 +33,11 @@
 </head>
 <body class="h-screen w-screen flex flex-col text-sm">
 
-    <header class="glass-panel z-50 flex justify-between items-center px-4 py-3 shrink-0">
+    <header class="glass-panel z-50 flex justify-between items-center px-4 py-3 shrink-0 rmss-studio-header">
         <div class="flex items-center gap-3">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <h1 class="text-lg font-semibold tracking-wide text-white">Rainmeter Skin Studio</h1>
-            <button onclick="toggleLang()" class="ml-2 px-2 py-1 text-xs font-bold bg-slate-800 text-sky-400 rounded hover:bg-slate-700 transition" id="lang-btn">ES</button>
+            <a href="/index.html" class="rmss-studio-brand" aria-label="RM Skin Studio — inicio">RM Skin Studio</a><h1 class="text-lg font-semibold tracking-wide text-white">Rainmeter Skin Studio</h1>
+            
             <input type="text" id="skin-name" value="MiCustomSkin" class="ml-4 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-sky-300 focus:border-sky-500 outline-none w-48" placeholder="Skin Name">
         </div>
         <div class="flex gap-2">
@@ -174,36 +174,12 @@
                 <button id="delete-widget-btn" onclick="deleteSelected()" class="hidden w-full py-2 mt-4 bg-red-900/30 text-red-400 border border-red-900 hover:bg-red-900/50 rounded transition">
                     <span id="lbl-del-btn">Eliminar Widget (Tecla Supr)</span>
                 </button>
-                <div class="ad-slot" style="margin-top:16px; min-height:250px; border:1px dashed #475569; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:12px; text-align:center; color:#64748b; font-size:11px; gap:5px;">
-                  <!-- Banner 300x250 Adsterra -->
-                  <script>
-                    atOptions = {
-                      'key' : '90461359d6979dc4291372ce39688f2f',
-                      'format' : 'iframe',
-                      'height' : 250,
-                      'width' : 300,
-                      'params' : {}
-                    };
-                  </script>
-                  <script src="https://www.highrevenueformat.com/90461359d6979dc4291372ce39688f2f/invoke.js"></script>
-                </div>
+                <div class="ad-slot" style="margin-top:16px; min-height:250px; border:1px dashed #475569; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:12px; text-align:center; color:#64748b; font-size:11px; gap:5px;" data-ad-kind="banner"><span class="ad-note">Publicidad</span></div>
             </div>
 
             <div id="content-code" class="hidden flex-1 overflow-y-auto p-4 bg-[#0d1117]">
-                <div class="rounded-xl border border-slate-700 bg-slate-900 p-4"><h3 class="text-sm font-semibold text-sky-300 mb-2">Generación en servidor</h3><p class="text-xs text-slate-400">El código .ini no se muestra ni se edita en el navegador. Al exportar, la plantilla se procesa en el servidor después de verificar tu sesión y tus créditos.</p><p class="text-xs text-slate-400 mt-3">Skin Studio: 30 créditos por exportación. Puedes guardar tu proyecto para seguir editándolo luego.</p></div>
-                <div class="ad-slot" style="margin-top:16px; min-height:250px; border:1px dashed #475569; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:12px; text-align:center; color:#64748b; font-size:11px; gap:5px;">
-                  <!-- Banner 300x250 Adsterra -->
-                  <script>
-                    atOptions = {
-                      'key' : '90461359d6979dc4291372ce39688f2f',
-                      'format' : 'iframe',
-                      'height' : 250,
-                      'width' : 300,
-                      'params' : {}
-                    };
-                  </script>
-                  <script src="https://www.highrevenueformat.com/90461359d6979dc4291372ce39688f2f/invoke.js"></script>
-                </div>
+                <div class="rounded-xl border border-slate-700 bg-slate-900 p-4"><h3 class="text-sm font-semibold text-sky-300 mb-2">Generación en servidor</h3><p class="text-xs text-slate-400">El código .ini no se muestra ni se edita en el navegador. Al exportar, la plantilla se procesa en el servidor después de verificar tu sesión y tus créditos.</p><p class="text-xs text-slate-400 mt-3">Skin Studio: 200 créditos ($2.00 USD de equivalencia) por exportación. Puedes guardar tu proyecto para seguir editándolo luego.</p></div>
+                
                 <code id="ini-preview" class="hidden"></code>
             </div>
         </aside>
@@ -217,13 +193,6 @@
     <script>
         let currentLang = 'es';
         const t = (es, en) => currentLang === 'es' ? es : en;
-
-        function toggleLang() {
-            currentLang = currentLang === 'es' ? 'en' : 'es';
-            document.getElementById('lang-btn').innerText = currentLang === 'es' ? 'ES' : 'EN';
-            updateLanguageUI();
-            buildPropertiesForm();
-        }
 
         function updateLanguageUI() {
             document.getElementById('lbl-load-zip').innerText = t('Cargar ZIP', 'Load ZIP');
@@ -747,6 +716,6 @@
 
         updateLanguageUI(); updateINI();
     </script>
-    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script><script src="/assets/firebase-auth.js"></script><script src="/assets/studio-bridge.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script><script src="/assets/firebase-auth.js"></script><script src="/assets/studio-bridge.js"></script><script src="/assets/i18n.js"></script><script src="/assets/ads.js"></script>
 </body>
 </html>

@@ -173,6 +173,23 @@
         return { ok: true, message: 'Si el correo está registrado, Firebase enviará las instrucciones para restablecer la contraseña.' };
       } catch (err) { throw friendlyError(err); }
     },
+    hasPasswordProvider() {
+      return !!auth.currentUser?.providerData?.some(provider => provider.providerId === 'password');
+    },
+    async changePassword({ currentPassword, newPassword }) {
+      await persistenceReady;
+      const user = auth.currentUser;
+      if (!user || !user.email) throw new Error('Inicia sesión otra vez para cambiar tu contraseña.');
+      if (!this.hasPasswordProvider()) throw new Error('Esta cuenta no utiliza el acceso por correo y contraseña.');
+      if (typeof newPassword !== 'string' || newPassword.length < 10 || newPassword.length > 128) throw new Error('La nueva contraseña debe tener entre 10 y 128 caracteres.');
+      try {
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, String(currentPassword || ''));
+        await user.reauthenticateWithCredential(credential);
+        await user.updatePassword(newPassword);
+        await user.getIdToken(true);
+        return { ok: true };
+      } catch (err) { throw friendlyError(err); }
+    },
     async signOut() { await auth.signOut(); try { localStorage.removeItem('rm_pending_username'); } catch {} }
   };
 

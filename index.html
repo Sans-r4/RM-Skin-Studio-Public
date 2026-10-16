@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="rmss-auth-pending">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -7,10 +7,10 @@
   <title>RM Skin Studio — diseña, personaliza y exporta</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/site.css">
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <script src="/assets/config.js"></script>
 </head>
 <body data-page="home">
+  <div class="rmss-auth-splash" aria-live="polite"><span class="rmss-spinner" aria-hidden="true"></span><span>Cargando entorno…</span></div>
   <header class="site-header">
     <div class="shell header-inner">
       <a class="brand" href="/index.html">
@@ -28,6 +28,10 @@
       <div class="header-account">
         <span class="credit-pill hidden" id="header-credit-pill">◈ <span id="header-credit-count">—</span> créditos</span>
         <span id="header-username" class="username muted"></span>
+        <span id="header-premium-badge" class="rmss-premium-label hidden">Premium</span>
+        <a class="rmss-header-link" href="/settings.html">Ajustes</a>
+        <a class="rmss-header-link" href="/pricing.html">Precios</a>
+        <button class="rmss-lang-toggle" type="button" aria-label="Cambiar idioma" title="Cambiar idioma">ES</button>
         <button id="logout-btn" class="quiet small hidden">Salir</button>
       </div>
     </div>
@@ -67,7 +71,16 @@
               <span class="google-g" aria-hidden="true">G</span> Continuar con Google
             </button>
             <div id="login-message" class="muted" role="status"></div>
+            <button type="button" id="show-reset-password" class="quiet small">¿Olvidaste tu contraseña?</button>
           </form>
+          <div id="reset-panel" class="space-y hidden">
+            <h3>Recuperar contraseña</h3>
+            <div class="field"><label for="reset-email">Correo electrónico</label><input id="reset-email" type="email" autocomplete="email" maxlength="254" placeholder="correo@ejemplo.com" required></div>
+            <div class="turnstile-slot" data-turnstile-action="password-reset"></div>
+            <button type="button" class="primary" id="reset-password-btn">Enviar enlace de recuperación</button>
+            <div id="reset-message" class="muted" role="status"></div>
+            <button type="button" class="quiet small" data-target="login-form">Volver a entrar</button>
+          </div>
 
           <form id="register-form" class="space-y hidden">
             <div>
@@ -86,6 +99,10 @@
             <div class="field">
               <label for="register-password">Contraseña</label>
               <input id="register-password" name="password" type="password" required minlength="10" placeholder="Mínimo 10 caracteres">
+            </div>
+            <div class="field">
+              <label for="register-password-confirm">Repite la contraseña</label>
+              <input id="register-password-confirm" name="password_confirm" type="password" autocomplete="new-password" required minlength="10" maxlength="128" placeholder="Repite tu contraseña">
             </div>
             <div class="turnstile-slot" data-turnstile-action="register"></div>
             <button class="primary" type="submit" style="width:100%">Crear cuenta</button>
@@ -123,30 +140,28 @@
             <div class="method-grid">
               <div class="method">
                 <h3>PayPal o tarjeta</h3>
+                <div class="field credit-selector">
+                  <label for="credit-slider">Cantidad de créditos (100–10.000)</label>
+                  <div class="range-row">
+                    <input id="credit-slider" type="range" min="100" max="10000" step="100" value="200" aria-describedby="credit-price-help">
+                    <div class="range-output"><strong id="credit-count-choice">200</strong> créditos<br><span id="credit-price" class="price-large">$2.00 USD</span></div>
+                  </div>
+                  <small id="credit-price-help" class="rmss-price-note">100 créditos = $1.00 USD. Límite de compra: $100.00 USD por transacción.</small>
+                </div>
                 <div id="paypal-buttons"></div>
+                <div id="googlepay-button-container" style="margin-top:10px"></div>
+                <div id="payment-message" class="muted" role="status" style="margin-top:10px"></div>
               </div>
             </div>
           </div>
 
           <div class="stack">
-            <div class="ad-slot banner-300" id="ad-credit-slot">
-              <!-- Banner 300x250 Adsterra -->
-              <script>
-                atOptions = {
-                  'key' : '90461359d6979dc4291372ce39688f2f',
-                  'format' : 'iframe',
-                  'height' : 250,
-                  'width' : 300,
-                  'params' : {}
-                };
-              </script>
-              <script src="https://www.highrevenueformat.com/90461359d6979dc4291372ce39688f2f/invoke.js"></script>
-            </div>
+            <div class="ad-slot banner-300" id="ad-credit-slot" data-ad-kind="banner"><span class="ad-note">Publicidad</span></div>
             <div class="notice">
               <strong>Costes de exportación</strong><br>
-              Skin Studio: 30 créditos<br>
-              Calendar Studio: 35 créditos<br>
-              GIF Studio: 40 créditos
+              Skin Studio: 200 créditos ($2.00 USD)<br>
+              Calendar Studio: 200 créditos ($2.00 USD)<br>
+              GIF Studio: 200 créditos ($2.00 USD)
             </div>
           </div>
         </div>
@@ -163,11 +178,7 @@
       </section>
 
       <section class="section">
-        <div class="ad-slot" id="ad-footer-slot">
-          <!-- Native Banner Adsterra -->
-          <script async="async" data-cfasync="false" src="https://pl31870580.profitableratecpmnetwork.com/9dfbb8f706917732aee76636799cab8d/invoke.js"></script>
-          <div id="container-9dfbb8f706917732aee76636799cab8d"></div>
-        </div>
+        <div class="ad-slot" id="ad-footer-slot" data-ad-kind="native"><span class="ad-note">Publicidad</span></div>
       </section>
     </section>
   </main>
@@ -184,7 +195,9 @@
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js" defer></script>
   <script src="/assets/firebase-auth.js" defer></script>
+  <script src="/assets/i18n.js" defer></script>
   <script src="/assets/app.js" defer></script>
+  <script src="/assets/ads.js" defer></script>
   <script src="/assets/payments.js" defer></script>
 </body>
 </html>

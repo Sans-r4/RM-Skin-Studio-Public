@@ -1,74 +1,48 @@
 # RM Skin Studio — frontend público
 
-**Repositorio:** `Sans-r4/RM-Skin-Studio-Public`  
-**Hosting:** Cloudflare Pages (usa el dominio gratis `pages.dev` al comenzar).  
-**Backend:** Cloudflare Worker privado + D1 + R2.
+Frontend estático de RM Skin Studio. Está construido con HTML, CSS y JavaScript vanilla, y se publica desde GitHub a Cloudflare Pages. No usa React, Vue ni un servidor Node en tiempo de ejecución.
 
-## Qué incluye
+## Archivos importantes
 
-- Skin Studio, Calendar Studio y GIF Studio.
-- Catálogo público y Descargables; previews Rainmeter SVG aproximadas o capturas de respaldo; selector de variantes.
-- Registro con Firebase email/password, verificación de email, recuperación de contraseña y botón **Continuar con Google**.
-- Integración cliente con Cloudflare Turnstile; el Worker valida CAPTCHA y tokens Firebase.
-- Perfil y créditos comerciales en D1; las cuentas nuevas reciben 25 créditos una sola vez al crear el perfil.
-- Panel `admin.html` protegido por GitHub OAuth para la cuenta autorizada `Sans-r4`.
-- Casillas preparadas para banners de Adsterra; no hay códigos publicitarios insertados por defecto.
+- `index.html`: autenticación Firebase, panel de usuario, créditos y pagos.
+- `catalog.html` / `downloads.html`: tienda pública y descargas compradas.
+- `settings.html`: nombre de usuario, idioma y cambio seguro de contraseña.
+- `pricing.html`: plan Premium de USD 7 al mes.
+- `admin.html`: panel de administración autenticado por GitHub OAuth; el backend privado autoriza las operaciones.
+- `studios/`: Skin Studio, Calendar Studio y GIF Studio.
+- `assets/config.js`: configuración pública del frontend. Conserva las claves/nombres existentes; no pegues aquí secretos de servidor.
+- `assets/firebase-auth.js`: integración Firebase Auth.
+- `assets/i18n.js`: idioma ES/EN/FR/PT/ZH/JA/RU; preferencia en `localStorage` con la clave `rmss_lang`.
+- `assets/payments.js` / `assets/pricing.js`: flujos PayPal y Google Pay/subscription.
+- `assets/ads.js`: anuncios Adsterra. Preserva la clave de banner `90461359d6979dc4291372ce39688f2f`; no añadas Popunder ni redirecciones automáticas.
 
-## Separación de repositorios
+## Economía
 
-No copies `functions/`, `migrations/` ni las plantillas del backend al repo público. La API y los archivos originales `.ini`/`.zip` deben permanecer en el repo privado `Sans-r4/RM-Skin-Studio-Backend-Private` y en R2 privado. GitHub solo guarda el código; Cloudflare Pages sirve el frontend.
+- Las exportaciones de los tres estudios cuestan exactamente **200 créditos** cada una.
+- La equivalencia visual del sistema es **100 créditos = USD 1.00**, por lo tanto 200 créditos equivalen a USD 2.00.
+- Compras de crédito: entre 100 y 10.000 créditos, en saltos de 100; máximo equivalente USD 100 por orden. El servidor vuelve a validar toda cantidad y precio.
+- El precio de cada elemento del catálogo sigue siendo personalizable desde el admin (0–100.000 créditos); el panel muestra su equivalencia USD según la relación de 100 créditos por dólar.
+- Premium cuesta USD 7.00/mes y debe activarse solo tras validar la suscripción PayPal en el backend. Los usuarios Premium no ven los contenedores `.ad-slot` cuando se ha actualizado el estado de cuenta.
+- La bonificación inicial continúa siendo 25 créditos y se gestiona una sola vez desde el backend.
 
-## Configurar el frontend
+## Instalación/despliegue
 
-En `assets/config.js`, configura estos valores de tu propio despliegue:
+1. Sube el contenido de esta carpeta a la raíz de `Sans-r4/RM-Skin-Studio-Public`.
+2. Conecta el repositorio a Cloudflare Pages. Usa la raíz `/`, sin comando de build (sitio HTML estático), y asigna el dominio `pages.dev`.
+3. Conserva `assets/config.js` y confirma que `apiBaseUrl` apunta al Worker y `turnstileSiteKey` sea la clave pública de tu widget Turnstile.
+4. Añade el host `pages.dev` en Firebase Authentication → Authorized domains.
+5. Comprueba que la API, Firebase, Turnstile y PayPal estén configurados antes de abrir el sitio al público.
+6. Revisa los archivos del backend y ejecuta migraciones en orden; instrucciones completas en `README-UPDATE-ES.md` del paquete integrado y en el README privado del backend.
 
-- `apiBaseUrl`: URL HTTPS real del Cloudflare Worker, sin `/` final.
-- `turnstileSiteKey`: Site Key pública de Cloudflare Turnstile.
-- `firebase.apiKey`, `authDomain`, `projectId`, `appId`, `messagingSenderId`: configuración web copiada desde Firebase Console.
+## Pruebas previas al lanzamiento
 
-`firebase.projectId` debe coincidir con `FIREBASE_PROJECT_ID` en las variables del Worker. Estas son claves de configuración web; no incluyas secretos de servidor aquí.
+- Registro por correo, verificación, restablecimiento, Google Sign-In y cierre de sesión.
+- CAPTCHA validado desde el Worker, no solo por la interfaz.
+- Saldo y bono inicial sin duplicados.
+- Orden PayPal de prueba, capture idempotente y comprobación de saldo.
+- Exportación cobra 200 créditos en Skin/Calendar/GIF.
+- Carga R2 y URL externa desde admin; precio y preview correctos.
+- Ban/unban, registro de actividad y ocultación de anuncios Premium.
+- Comportamiento del header fijo y selector de los siete idiomas en móvil y escritorio.
 
-## Firebase Authentication Spark
-
-1. Crea proyecto/app web en [Firebase Console](https://console.firebase.google.com/), mantén el plan Spark y no vincules facturación.
-2. Activa Email/Password y Google en Authentication → Sign-in method.
-3. Añade el hostname exacto de Pages (por ejemplo `mi-web.pages.dev`) en Authentication → Settings → Authorized domains.
-4. Ajusta los datos de Firebase y la URL Worker en `assets/config.js`.
-5. Ejecuta las migraciones `0001` a `0005` en orden en Cloudflare D1, y pon `FIREBASE_PROJECT_ID` en el Worker.
-6. Prueba registro, verificación de email, login, recuperación, Google y CAPTCHA.
-
-El código del Worker verifica criptográficamente los ID tokens Firebase, exige correo verificado y requiere un ticket de CAPTCHA de un solo uso para crear/vincular el perfil desde el flujo de inicio de sesión. No confía solo en datos que el navegador envíe como username/email.
-
-## Créditos, catálogo y pagos
-
-- Bono inicial: 25 créditos, una sola vez por perfil.
-- Exportar: Skin 30, Calendar 35, GIF 40 créditos.
-- Precio de catálogo controlado desde admin: 0–100000 créditos.
-- Créditos: 100–2000 en saltos de 50. Empieza con PayPal Sandbox; los pagos reales tienen comisiones.
-
-## Adsterra y privacidad
-
-Inserta solo códigos de Banner o Native Banner aprobados y comprueba su comportamiento. Los espacios están vacíos por defecto; el sitio no añade pop-under ni redirecciones automáticas. Actualiza `privacy.html` para declarar Firebase, Cloudflare, PayPal, Adsterra y cualquier analítica que realmente actives.
-
-## Previews Rainmeter
-
-El frontend no recibe el INI comercial original a través de la ruta de preview. Para INI compatibles el backend genera un SVG estático; para skins complejos, sube una captura real. La preview es visual y puede capturarse; el original permanece privado hasta una descarga autorizada.
-
-## Coste cero y publicación
-
-Puedes publicar desde GitHub.com + Cloudflare Pages/Workers Builds sin instalar Git, Node.js o Wrangler en Windows. Usa planes gratuitos y `pages.dev`; revisa cuotas y no actives upgrades. Firebase Spark incluye funciones gratuitas de autenticación dentro de sus límites. [Límites de Firebase Auth](https://firebase.google.com/docs/auth/limits) y [plan Spark](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans).
-
-## Antes del lanzamiento
-
-- [ ] Backend privado y frontend público en repos separados.
-- [ ] `APP_ORIGIN`, Firebase, Turnstile y bindings D1/R2 configurados.
-- [ ] Migraciones `0001`–`0005` ejecutadas una sola vez.
-- [ ] Login por email, verificación, reset de contraseña, Google y CAPTCHA probados.
-- [ ] Bono de 25 créditos no se repite al iniciar sesión otra vez.
-- [ ] Admin GitHub OAuth solo permite a `Sans-r4`.
-- [ ] Descargas originales no accesibles sin autorización.
-- [ ] PayPal Sandbox y backups probados.
-
-## Estado
-
-Estos archivos no se han subido a tus cuentas ni desplegado. Debes configurar las claves en los paneles y hacer pruebas completas antes de aceptar pagos reales.
+No pongas secretos OAuth, PayPal, Turnstile Secret ni claves de cifrado en el repositorio público. La clave web Firebase y la Site Key Turnstile sí son de configuración cliente; su seguridad depende de la validación del backend y del origen autorizado.

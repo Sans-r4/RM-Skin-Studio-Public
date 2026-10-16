@@ -25,8 +25,12 @@
         <a href="/studios/gif.html">GIF Studio</a>
       </nav>
       <div class="header-account">
-        <span class="credit-pill">◈ <span id="header-credit-count">—</span> créditos</span>
+        <span id="header-credit-pill" class="credit-pill hidden">◈ <span id="header-credit-count">—</span> créditos</span>
         <span id="header-username" class="username muted"></span>
+        <span id="header-premium-badge" class="rmss-premium-label hidden">Premium</span>
+        <a class="rmss-header-link" href="/settings.html">Ajustes</a>
+        <a class="rmss-header-link" href="/pricing.html">Precios</a>
+        <button class="rmss-lang-toggle" type="button" aria-label="Cambiar idioma" title="Cambiar idioma">ES</button>
         <button id="logout-btn" class="quiet small hidden">Salir</button>
       </div>
     </div>
@@ -44,18 +48,7 @@
       <div id="catalog-list" class="stack" style="margin-top:26px">
         <div class="empty-state">Cargando catálogo…</div>
       </div>
-      <div class="ad-slot" style="margin-top:24px">
-        <script>
-          atOptions = {
-            'key' : '90461359d6979dc4291372ce39688f2f',
-            'format' : 'iframe',
-            'height' : 250,
-            'width' : 300,
-            'params' : {}
-          };
-        </script>
-        <script src="https://www.highrevenueformat.com/90461359d6979dc4291372ce39688f2f/invoke.js"></script>
-      </div>
+      <div class="ad-slot" style="margin-top:24px" data-ad-kind="banner"><span class="ad-note">Publicidad</span></div>
     </section>
   </main>
   <footer class="footer">
@@ -67,6 +60,8 @@
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js" defer></script>
   <script src="/assets/firebase-auth.js" defer></script>
+  <script src="/assets/i18n.js" defer></script>
   <script src="/assets/app.js" defer></script>
+  <script src="/assets/ads.js" defer></script>
 </body>
 </html>
