@@ -1,12 +1,11 @@
-/* Configuración pública de RM Skin Studio. No pongas secretos aquí. */
 window.RMSS_CONFIG = Object.assign({
-  apiBaseUrl: 'https://REPLACE-WITH-YOUR-WORKER.workers.dev',
-  turnstileSiteKey: 'REPLACE-WITH-CLOUDFLARE-TURNSTILE-SITE-KEY',
+  apiBaseUrl: 'https://rm-skin-studio-backend-private.r4ksans.workers.dev',
+  turnstileSiteKey: 'PEGA_AQUI_LA_SITE_KEY_PUBLICA',
   firebase: {
-    apiKey: 'REPLACE-WITH-FIREBASE-API-KEY',
-    authDomain: 'REPLACE-WITH-FIREBASE-PROJECT.firebaseapp.com',
-    projectId: 'REPLACE-WITH-FIREBASE-PROJECT-ID',
-    appId: 'REPLACE-WITH-FIREBASE-APP-ID',
-    messagingSenderId: 'REPLACE-WITH-FIREBASE-SENDER-ID'
+    apiKey: 'AIzaSyBpgqian-NkKplkXb8HeoRoQLcYygbZg3k',
+    authDomain: 'rm-skin-studio.firebaseapp.com',
+    projectId: 'rm-skin-studio',
+    appId: '1:222263571098:web:e01bc1b42be5cbd8276523',
+    messagingSenderId: '222263571098'
   }
 }, window.RMSS_CONFIG || {});
