@@ -1,83 +1,190 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#080b12"><meta name="description" content="RM Skin Studio: diseña widgets y skins para Rainmeter, guarda proyectos y exporta ZIP usando créditos.">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="RM Skin Studio - Diseño y personalización">
   <title>RM Skin Studio — diseña, personaliza y exporta</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/site.css">
-    <script src="/assets/config.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <script src="/assets/config.js"></script>
 </head>
 <body data-page="home">
-<header class="site-header"><div class="shell header-inner">
-  <a class="brand" href="/index.html"><span class="brand-mark">RM</span><span>RM Skin Studio</span></a>
-  <nav class="nav" id="main-nav"><a href="/index.html" class="active">Inicio</a><a href="/catalog.html">Catálogo</a><a href="/downloads.html">Descargables</a><a href="/studios/skin.html">Skin Studio</a><a href="/studios/calendar.html">Calendar</a><a href="/studios/gif.html">GIF Studio</a></nav>
-  <div class="header-account"><span class="credit-pill" id="header-credits">◈ <span id="header-credit-count">—</span> créditos</span><span class="username muted" id="header-username"></span><button id="logout-btn" class="quiet small hidden">Salir</button></div>
-</div><div class="shell mobile-nav"><a href="/catalog.html">Catálogo</a><a href="/downloads.html">Descargables</a><a href="/studios/skin.html">Skin Studio</a><a href="/studios/calendar.html">Calendar</a><a href="/studios/gif.html">GIF Studio</a></div></header>
-<main class="shell">
-  <section id="auth-screen" class="auth-wrap">
-    <div class="auth-layout">
-      <div class="auth-copy"><div class="eyebrow">Tres estudios · una cuenta · tus proyectos</div><h1>Tu escritorio.<br><span class="gradient-text">Tus reglas.</span></h1><p>Diseña widgets visualmente, crea calendarios y convierte GIF en widgets de Rainmeter. Los archivos de exportación se preparan en el servidor y se entregan en un ZIP cuando se confirma el saldo de créditos.</p>
-        <div class="card-grid" style="grid-template-columns:1fr;gap:10px;margin-top:25px;max-width:430px">
-          <div class="card" style="padding:13px 15px;display:flex;gap:12px;align-items:center"><div class="card-icon" style="margin:0;flex-shrink:0">⌘</div><div><strong>Skin Studio</strong><div class="muted" style="font-size:12px">Relojes, fechas, clima, recursos y texto</div></div></div>
-          <div class="card" style="padding:13px 15px;display:flex;gap:12px;align-items:center"><div class="card-icon" style="margin:0;flex-shrink:0">▦</div><div><strong>Calendar Studio</strong><div class="muted" style="font-size:12px">Colores, geometría y variaciones</div></div></div>
-          <div class="card" style="padding:13px 15px;display:flex;gap:12px;align-items:center"><div class="card-icon" style="margin:0;flex-shrink:0">▣</div><div><strong>GIF Studio</strong><div class="muted" style="font-size:12px">Transforma fotogramas en un widget animado</div></div></div>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/index.html">
+        <span class="brand-mark">RM</span>
+        <span>RM Skin Studio</span>
+      </a>
+      <nav class="nav">
+        <a class="active" href="/index.html">Inicio</a>
+        <a href="/catalog.html">Catálogo</a>
+        <a href="/downloads.html">Descargables</a>
+        <a href="/studios/skin.html">Skin Studio</a>
+        <a href="/studios/calendar.html">Calendar</a>
+        <a href="/studios/gif.html">GIF Studio</a>
+      </nav>
+      <div class="header-account">
+        <span class="credit-pill hidden" id="header-credit-pill">◈ <span id="header-credit-count">—</span> créditos</span>
+        <span id="header-username" class="username muted"></span>
+        <button id="logout-btn" class="quiet small hidden">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="auth-screen">
+      <div class="two-col">
+        <div class="hero">
+          <div class="eyebrow">RM Skin Studio</div>
+          <h1>Diseña, personaliza y exporta.</h1>
+          <p>Herramientas para crear widgets de Rainmeter directamente desde el navegador. Inicia sesión para guardar proyectos y descargar plantillas listas para usar.</p>
+        </div>
+        <div class="panel">
+          <div class="tab-group">
+            <button class="tab active" data-target="login-form">Entrar</button>
+            <button class="tab" data-target="register-form">Registro</button>
+          </div>
+          
+          <form id="login-form" class="space-y">
+            <div>
+              <div class="section-label">Bienvenido de vuelta</div>
+              <h2 style="margin:5px 0 0">Entrar a tu cuenta</h2>
+            </div>
+            <div class="field">
+              <label for="login-identity">Correo electrónico</label>
+              <input id="login-identity" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="correo@ejemplo.com">
+            </div>
+            <div class="field">
+              <label for="login-password">Contraseña</label>
+              <input id="login-password" name="password" type="password" autocomplete="current-password" required maxlength="128" placeholder="Tu contraseña">
+            </div>
+            <div class="turnstile-slot" data-turnstile-action="login"></div>
+            <button class="primary" type="submit" style="width:100%">Entrar</button>
+            <div class="auth-divider">o</div>
+            <button type="button" id="google-login-btn" class="google-auth-button">
+              <span class="google-g" aria-hidden="true">G</span> Continuar con Google
+            </button>
+            <div id="login-message" class="muted" role="status"></div>
+          </form>
+
+          <form id="register-form" class="space-y hidden">
+            <div>
+              <div class="section-label">Empieza a crear</div>
+              <h2 style="margin:5px 0 0">Crear cuenta gratis</h2>
+              <p style="margin:6px 0 0;font-size:13px">Recibes <strong style="color:var(--green)">25 créditos</strong> de bienvenida.</p>
+            </div>
+            <div class="field">
+              <label for="register-username">Nombre de usuario</label>
+              <input id="register-username" name="username" required minlength="3" maxlength="24" pattern="[A-Za-z0-9_-]{3,24}" placeholder="Sans_Studio">
+            </div>
+            <div class="field">
+              <label for="register-email">Correo electrónico</label>
+              <input id="register-email" name="email" type="email" required maxlength="254" placeholder="correo@ejemplo.com">
+            </div>
+            <div class="field">
+              <label for="register-password">Contraseña</label>
+              <input id="register-password" name="password" type="password" required minlength="10" placeholder="Mínimo 10 caracteres">
+            </div>
+            <div class="turnstile-slot" data-turnstile-action="register"></div>
+            <button class="primary" type="submit" style="width:100%">Crear cuenta</button>
+            <div class="auth-divider">o</div>
+            <button type="button" id="google-register-btn" class="google-auth-button">
+              <span class="google-g" aria-hidden="true">G</span> Continuar con Google
+            </button>
+            <div id="register-message" class="muted" role="status"></div>
+          </form>
         </div>
       </div>
-      <div class="auth-panel">
-        <div class="auth-switch"><button id="show-login" class="primary">Iniciar sesión</button><button id="show-register">Crear cuenta</button></div>
-        <form id="login-form" class="space-y">
-          <div><div class="section-label">Bienvenido de vuelta</div><h2 style="margin:5px 0 0">Entrar a tu cuenta</h2></div>
-          <div class="field"><label for="login-identity">Correo electrónico</label><input id="login-identity" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="correo@ejemplo.com"></div>
-          <div class="field"><label for="login-password">Contraseña</label><input id="login-password" name="password" type="password" autocomplete="current-password" required maxlength="128" placeholder="Tu contraseña"></div>
-          <div class="turnstile-slot" data-turnstile-action="login"></div><button class="primary" type="submit" style="width:100%">Entrar</button><div class="auth-divider">o</div><button type="button" id="google-login-btn" class="google-auth-button"><span class="google-g" aria-hidden="true">G</span>Continuar con Google</button><div id="login-message" class="muted" role="status"></div><details><summary style="cursor:pointer;color:var(--accent);font-size:12px">¿Olvidaste tu contraseña?</summary><div class="field" style="margin-top:10px"><label for="reset-email">Correo electrónico</label><input id="reset-email" type="email" maxlength="254" autocomplete="email" placeholder="correo@ejemplo.com"></div><div class="turnstile-slot" data-turnstile-action="password-reset"></div><button type="button" id="reset-password-btn" class="quiet small">Enviar enlace de recuperación</button><div id="reset-message" class="muted" role="status"></div></details><details><summary style="cursor:pointer;color:var(--accent);font-size:12px">¿No recibiste el correo de verificación?</summary><p class="muted" style="font-size:12px">Introduce tu correo y contraseña arriba y pulsa Entrar. Si las credenciales son correctas pero el correo sigue sin verificar, intentaremos enviarte otro enlace. Revisa también Spam.</p></details><p class="muted" style="font-size:11px;margin:0">Firebase gestiona las contraseñas y la verificación. RM Skin Studio no almacena la contraseña legible.</p>
-        </form>
-        <form id="register-form" class="space-y hidden">
-          <div><div class="section-label">Empieza a crear</div><h2 style="margin:5px 0 0">Crear cuenta gratis</h2><p style="margin:6px 0 0;font-size:13px">Recibes <strong style="color:var(--green)">25 créditos</strong> después de verificar tu correo e iniciar sesión por primera vez.</p></div>
-          <div class="field"><label for="register-username">Nombre de usuario</label><input id="register-username" name="username" required minlength="3" maxlength="24" pattern="[A-Za-z0-9_-]{3,24}" autocomplete="username" placeholder="Sans_Studio"></div>
-          <div class="field"><label for="register-email">Correo electrónico</label><input id="register-email" name="email" type="email" required maxlength="254" autocomplete="email" placeholder="correo@ejemplo.com"></div>
-          <div class="field"><label for="register-password">Contraseña (mínimo 10 caracteres)</label><input id="register-password" name="password" type="password" required minlength="10" maxlength="128" autocomplete="new-password" placeholder="Crea una contraseña fuerte"></div>
-          <div class="field"><label for="register-password-confirm">Repite la contraseña</label><input id="register-password-confirm" type="password" required minlength="10" maxlength="128" autocomplete="new-password" placeholder="Repite la contraseña"></div><div class="turnstile-slot" data-turnstile-action="register"></div><button class="primary" type="submit" style="width:100%">Crear cuenta y recibir 25 créditos</button><div class="auth-divider">o</div><button type="button" id="google-register-btn" class="google-auth-button"><span class="google-g" aria-hidden="true">G</span>Continuar con Google</button><div id="register-message" class="muted" role="status"></div>
-        </form>
+    </section>
+
+    <section id="app-screen" class="hidden">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">RM Skin Studio · área personal</div>
+          <h1>Hola, <span id="welcome-username" class="gradient-text">creador</span>.</h1>
+          <p>Continúa un diseño, explora las descargas listas o añade créditos a tu saldo.</p>
+        </div>
       </div>
+
+      <div class="stat-row">
+        <div class="stat"><div id="stat-credits" class="num">25</div><small>Créditos disponibles</small></div>
+        <div class="stat"><div id="stat-projects" class="num">0</div><small>Proyectos guardados</small></div>
+        <div class="stat"><div id="stat-exports" class="num">0</div><small>Exportaciones registradas</small></div>
+      </div>
+
+      <section class="section">
+        <div class="two-col">
+          <div class="panel" style="margin:0">
+            <div class="panel-header">
+              <div><div class="eyebrow">Billetera</div><h2>Comprar créditos</h2></div>
+            </div>
+            <div class="method-grid">
+              <div class="method">
+                <h3>PayPal o tarjeta</h3>
+                <div id="paypal-buttons"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="ad-slot banner-300" id="ad-credit-slot">
+              <!-- Banner 300x250 Adsterra -->
+              <script>
+                atOptions = {
+                  'key' : '90461359d6979dc4291372ce39688f2f',
+                  'format' : 'iframe',
+                  'height' : 250,
+                  'width' : 300,
+                  'params' : {}
+                };
+              </script>
+              <script src="https://www.highrevenueformat.com/90461359d6979dc4291372ce39688f2f/invoke.js"></script>
+            </div>
+            <div class="notice">
+              <strong>Costes de exportación</strong><br>
+              Skin Studio: 30 créditos<br>
+              Calendar Studio: 35 créditos<br>
+              GIF Studio: 40 créditos
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div><div class="eyebrow">Espacio de trabajo</div><h2>Tus proyectos guardados</h2></div>
+          <a href="/downloads.html" class="button">Ver descargables →</a>
+        </div>
+        <div id="projects-list" class="project-list">
+          <div class="empty-state">Cargando proyectos…</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="ad-slot" id="ad-footer-slot">
+          <!-- Native Banner Adsterra -->
+          <script async="async" data-cfasync="false" src="https://pl31870580.profitableratecpmnetwork.com/9dfbb8f706917732aee76636799cab8d/invoke.js"></script>
+          <div id="container-9dfbb8f706917732aee76636799cab8d"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell" style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap">
+      <span>© <span id="year"></span> RM Skin Studio · Sans R4</span>
+      <span><a href="/privacy.html">Privacidad</a> · <a href="/terms.html">Términos</a> · <a href="/admin.html">Admin</a></span>
     </div>
-  </section>
+  </footer>
 
-  <section id="app-screen" class="hidden">
-    <div class="hero"><div><div class="eyebrow">RM Skin Studio · área personal</div><h1>Hola, <span id="welcome-username" class="gradient-text">creador</span>.</h1><p>Continúa un diseño, explora las descargas listas o añade créditos a tu saldo. Tus proyectos quedan privados en tu cuenta.</p><div class="hero-actions"><a class="button primary" href="/studios/skin.html">Abrir Skin Studio ↗</a><a class="button" href="/catalog.html">Explorar catálogo</a></div></div>
-      <div class="hero-art"><div class="mock-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="muted" style="margin-left:auto;font-size:11px">PREVIEW · 1920 × 1080</span></div><div class="mock-body"><div class="mock-side"><div class="mock-lines"></div><div class="mock-lines"></div><div class="mock-lines"></div><div class="mock-lines"></div><div class="mock-lines"></div></div><div class="mock-card"><div class="mock-preview"><div class="mock-clock">10:42</div></div><div style="display:flex;gap:8px;margin-top:12px"><div class="mock-lines" style="width:33%"></div><div class="mock-lines" style="width:22%"></div><div class="mock-lines" style="width:45%"></div></div></div></div></div>
-    </div>
-    <div class="stat-row"><div class="stat"><div id="stat-credits" class="num">25</div><small>Créditos disponibles</small></div><div class="stat"><div id="stat-projects" class="num">0</div><small>Proyectos guardados</small></div><div class="stat"><div id="stat-exports" class="num">0</div><small>Exportaciones registradas</small></div></div>
-    <section class="section" style="padding-top:0"><div class="section-head"><div><div class="eyebrow">Tus herramientas</div><h2>Tres maneras de crear</h2><p>Elige un estudio; los precios de exportación aparecen antes de confirmar el ZIP.</p></div></div><div class="card-grid">
-      <article class="card"><div class="card-icon">⌘</div><h3>Rainmeter Skin Studio</h3><p>Construye un escritorio con relojes, fechas, clima, indicadores del sistema y texto personalizado.</p><div class="card-footer"><span class="status">30 créditos / exportación</span><a class="button small" href="/studios/skin.html">Abrir →</a></div></article>
-      <article class="card"><div class="card-icon">▦</div><h3>Calendar Studio</h3><p>Personaliza tamaño, escala, cuadrícula, paleta y variaciones de calendario.</p><div class="card-footer"><span class="status">35 créditos / exportación</span><a class="button small" href="/studios/calendar.html">Abrir →</a></div></article>
-      <article class="card"><div class="card-icon">▣</div><h3>GIF Studio</h3><p>Usa un GIF propio, define FPS y exporta las imágenes y el archivo Rainmeter dentro de un ZIP.</p><div class="card-footer"><span class="status">40 créditos / exportación</span><a class="button small" href="/studios/gif.html">Abrir →</a></div></article>
-    </div></section>
-
-    <section class="section"><div class="two-col"><div class="panel" style="margin:0"><div class="panel-header"><div><div class="eyebrow">Billetera</div><h2>Comprar créditos</h2></div><span class="credit-pill"><span id="wallet-current">25</span> disponibles</span></div>
-      <p style="font-size:13px">Usa el deslizador para elegir la cantidad. El importe se calcula en el servidor y se confirma con PayPal antes de acreditar tu cuenta.</p>
-      <div class="field"><label for="credit-slider">Cantidad de créditos</label><div class="range-row"><input id="credit-slider" type="range" min="100" max="2000" step="50" value="250"><div class="range-output"><div id="credit-count-choice" class="price-large">250</div><div class="muted" style="font-size:11px">créditos</div></div></div></div>
-      <div style="display:flex;justify-content:space-between;gap:16px;align-items:center;border-top:1px solid var(--line);padding-top:15px;margin-top:15px"><div><div class="muted" style="font-size:12px">Total de la compra</div><div id="credit-price" class="price-large">$4.09 USD</div></div><span class="status">Más créditos = menor coste unitario</span></div>
-      <div class="method-grid"><div class="method"><h3>PayPal o tarjeta</h3><div id="paypal-buttons"><div class="muted" style="font-size:12px">El checkout aparece cuando hayas configurado las credenciales de PayPal en Cloudflare.</div></div></div><div class="method"><h3>Google Pay</h3><div id="googlepay-button-container"><div class="muted" style="font-size:12px">Disponible después de habilitar Google Pay en PayPal y de superar la comprobación de elegibilidad.</div></div><p class="muted" style="font-size:11px">La disponibilidad depende de la cuenta de comercio, el país, el navegador y el dispositivo.</p></div></div>
-      <div id="payment-message" class="notice" role="status" style="margin-top:14px">Pagos en modo de prueba hasta que configures PayPal Sandbox. Nunca se añaden créditos solo por volver desde PayPal: el servidor verifica la captura del pago.</div>
-    </div><div class="stack"><div class="ad-slot banner-300" id="ad-credit-slot">
-  <script>
-    atOptions = {
-      'key' : '90461359d6979dc4291372ce39688f2f',
-      'format' : 'iframe',
-      'height' : 250,
-      'width' : 300,
-      'params' : {}
-    };
-  </script>
-  <script src="https://www.highrevenueformat.com/90461359d6979dc4291372ce39688f2f/invoke.js"></script>
-</div><div class="ad-note">Sin pop-under ni redirecciones automáticas añadidas por este proyecto.</div><!-- Pega aquí únicamente el código Banner de Adsterra aprobado para tu sitio. No pegues Popunder ni Smartlink. --></div><div class="notice"><strong>Costes de exportación</strong><br>Skin Studio: 30 créditos<br>Calendar Studio: 35 créditos<br>GIF Studio: 40 créditos<br><span class="muted">Las descargas publicadas en Catálogo admiten precios de 0 a 25 créditos, siempre por debajo de una exportación.</span></div></div></div></section>
-
-    <section class="section"><div class="section-head"><div><div class="eyebrow">Espacio de trabajo</div><h2>Tus proyectos guardados</h2><p>Los proyectos se guardan en tu cuenta y se pueden volver a abrir.</p></div><a href="/downloads.html" class="button">Ver descargables →</a></div><div id="projects-list" class="project-list"><div class="empty-state">Cargando proyectos…</div></div></section>
-    <section class="section"><div class="ad-slot" id="ad-footer-slot"><div>Espacio publicitario · Banner responsivo</div><div class="ad-note">Los anuncios se muestran en espacios fijos; el sitio no inicia clics ni navegación automática.</div><!-- Pega aquí el código Banner de Adsterra para el formato aprobado. No uses scripts Popunder/Smartlink. --></div></section>
-  </section>
-</main>
-<footer class="footer"><div class="shell" style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap"><span>© <span id="year"></span> RM Skin Studio · Sans R4</span><span><a href="/privacy.html">Privacidad</a> · <a href="/terms.html">Términos</a> · <a href="/catalog.html">Catálogo</a></span></div></footer>
-<div id="toast" class="toast hidden" role="status"></div>
-<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js" defer></script><script src="/assets/firebase-auth.js" defer></script><script src="/assets/app.js" defer></script><script src="/assets/payments.js" defer></script>
-</body></html>
+  <div id="toast" class="toast hidden" role="status"></div>
+  
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js" defer></script>
+  <script src="/assets/firebase-auth.js" defer></script>
+  <script src="/assets/app.js" defer></script>
+  <script src="/assets/payments.js" defer></script>
+</body>
+</html>
