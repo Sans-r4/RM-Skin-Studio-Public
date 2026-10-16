@@ -174,12 +174,36 @@
                 <button id="delete-widget-btn" onclick="deleteSelected()" class="hidden w-full py-2 mt-4 bg-red-900/30 text-red-400 border border-red-900 hover:bg-red-900/50 rounded transition">
                     <span id="lbl-del-btn">Eliminar Widget (Tecla Supr)</span>
                 </button>
-                <div class="ad-slot" style="margin-top:18px;min-height:170px;border:1px dashed #475569;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:12px;text-align:center;color:#64748b;font-size:11px;gap:5px"><span>Espacio publicitario · Banner</span><small>Solo Banner estático; sin Popunder ni redirecciones automáticas.</small><!-- Inserta aquí el código Banner de Adsterra aprobado. --></div>
+                <div class="ad-slot" style="margin-top:16px; min-height:250px; border:1px dashed #475569; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:12px; text-align:center; color:#64748b; font-size:11px; gap:5px;">
+                  <!-- Banner 300x250 Adsterra -->
+                  <script>
+                    atOptions = {
+                      'key' : '90461359d6979dc4291372ce39688f2f',
+                      'format' : 'iframe',
+                      'height' : 250,
+                      'width' : 300,
+                      'params' : {}
+                    };
+                  </script>
+                  <script src="https://www.highrevenueformat.com/90461359d6979dc4291372ce39688f2f/invoke.js"></script>
+                </div>
             </div>
 
             <div id="content-code" class="hidden flex-1 overflow-y-auto p-4 bg-[#0d1117]">
                 <div class="rounded-xl border border-slate-700 bg-slate-900 p-4"><h3 class="text-sm font-semibold text-sky-300 mb-2">Generación en servidor</h3><p class="text-xs text-slate-400">El código .ini no se muestra ni se edita en el navegador. Al exportar, la plantilla se procesa en el servidor después de verificar tu sesión y tus créditos.</p><p class="text-xs text-slate-400 mt-3">Skin Studio: 30 créditos por exportación. Puedes guardar tu proyecto para seguir editándolo luego.</p></div>
-                <div class="ad-slot" style="margin-top:16px;min-height:250px;border:1px dashed #475569;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:12px;text-align:center;color:#64748b;font-size:11px;gap:5px"><span>Espacio publicitario · Banner</span><small>Sin Popunder ni redirecciones automáticas añadidas por el sitio.</small><!-- Inserta aquí el código Banner de Adsterra aprobado. --></div>
+                <div class="ad-slot" style="margin-top:16px; min-height:250px; border:1px dashed #475569; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:12px; text-align:center; color:#64748b; font-size:11px; gap:5px;">
+                  <!-- Banner 300x250 Adsterra -->
+                  <script>
+                    atOptions = {
+                      'key' : '90461359d6979dc4291372ce39688f2f',
+                      'format' : 'iframe',
+                      'height' : 250,
+                      'width' : 300,
+                      'params' : {}
+                    };
+                  </script>
+                  <script src="https://www.highrevenueformat.com/90461359d6979dc4291372ce39688f2f/invoke.js"></script>
+                </div>
                 <code id="ini-preview" class="hidden"></code>
             </div>
         </aside>
