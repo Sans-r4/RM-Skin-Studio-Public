@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skin Studio — RM Skin Studio</title>
+    <link rel="stylesheet" href="/assets/studio-bridge.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        #workspace { background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+        #canvas {
+            position: relative; background-color: #000; box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden;
+            border: 2px dashed rgba(255,255,255,0.1); transition: border 0.3s;
+        }
+        #canvas.dragover { border-color: #3b82f6; background-color: rgba(59, 130, 246, 0.1); }
+        .widget-element { position: absolute; cursor: grab; user-select: none; white-space: nowrap; border: 1px solid transparent; transition: border 0.1s; z-index: 10; }
+        .widget-element:active { cursor: grabbing; z-index: 20; }
+        .widget-element.selected { border: 1px dashed #38bdf8; z-index: 20; }
+        .glass-panel { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .menu-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+    <script src="/assets/config.js"></script>
+</head>
+<body class="h-screen w-screen flex flex-col text-sm">
+
+    <header class="glass-panel z-50 flex justify-between items-center px-4 py-3 shrink-0">
+        <div class="flex items-center gap-3">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <h1 class="text-lg font-semibold tracking-wide text-white">Rainmeter Skin Studio</h1>
+            <button onclick="toggleLang()" class="ml-2 px-2 py-1 text-xs font-bold bg-slate-800 text-sky-400 rounded hover:bg-slate-700 transition" id="lang-btn">ES</button>
+            <input type="text" id="skin-name" value="MiCustomSkin" class="ml-4 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-sky-300 focus:border-sky-500 outline-none w-48" placeholder="Skin Name">
+        </div>
+        <div class="flex gap-2">
+            <button onclick="document.getElementById('importZipFile').click()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 transition flex gap-2 items-center border border-slate-600" id="btn-load-zip">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> <span id="lbl-load-zip">Cargar ZIP</span>
+            </button>
+            <input type="file" id="importZipFile" class="hidden" accept=".zip" onchange="importZIP(event)">
+
+            <button onclick="document.getElementById('importFontFile').click()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 transition flex gap-2 items-center border border-slate-600" id="btn-add-font">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg> <span id="lbl-add-font">Fuente .ttf</span>
+            </button>
+            <input type="file" id="importFontFile" class="hidden" accept=".ttf,.otf" onchange="importFont(event)">
+            
+            <button onclick="exportSkin()" class="px-4 py-1.5 rounded bg-sky-600 hover:bg-sky-500 text-white font-medium transition flex gap-2 items-center shadow-lg shadow-sky-900/50" id="btn-export-zip">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> <span id="lbl-export-zip">Exportar ZIP</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 relative flex overflow-hidden" id="workspace">
+        <aside id="leftPanel" class="glass-panel w-64 absolute left-0 top-0 bottom-0 z-40 menu-transition flex flex-col translate-x-0">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="font-semibold text-slate-200" id="lbl-add-widget">Añadir Widget</h2>
+                <button onclick="togglePanel('leftPanel')" class="text-slate-400 hover:text-white"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+            </div>
+            <div class="p-4 flex-1 overflow-y-auto flex flex-col gap-3">
+                
+                <button onclick="addWidget('Clock')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-left flex items-center gap-3 transition">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> <span id="lbl-w-clock">Reloj</span>
+                </button>
+                
+                <button onclick="addWidget('Date')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-left flex items-center gap-3 transition">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <span id="lbl-w-date">Fecha</span>
+                </button>
+                
+                <button onclick="addWidget('Weather')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-left flex items-center gap-3 transition">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19a4.5 4.5 0 1 0-4-6.5h-1a3.5 3.5 0 0 0 0 7h5z"/><circle cx="12" cy="8" r="3"/><line x1="12" y1="2" x2="12" y2="3"/><line x1="12" y1="13" x2="12" y2="14"/></svg> <span id="lbl-w-weather">Clima Global (Wttr)</span>
+                </button>
+                
+                <div class="my-1 border-b border-slate-700"></div>
+
+                <button onclick="addWidget('Resource', 'CPU')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-left flex items-center gap-3 transition text-xs">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg> <span id="lbl-w-cpu">Uso de CPU</span>
+                </button>
+
+                <button onclick="addWidget('Resource', 'RAM')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-left flex items-center gap-3 transition text-xs">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg> <span id="lbl-w-ram">Uso de RAM</span>
+                </button>
+
+                <button onclick="addWidget('Resource', 'Network')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-left flex items-center gap-3 transition text-xs">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg> <span id="lbl-w-net">Uso de Red</span>
+                </button>
+
+                <button onclick="addWidget('Resource', 'Battery')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-left flex items-center gap-3 transition text-xs">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2" ry="2"/><line x1="22" y1="11" x2="22" y2="13"/></svg> <span id="lbl-w-batt">Batería</span>
+                </button>
+
+                <div class="my-1 border-b border-slate-700"></div>
+
+                <button onclick="addWidget('Text')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-left flex items-center gap-3 transition">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg> <span id="lbl-w-text">Texto Libre</span>
+                </button>
+                
+                <div class="mt-4 p-3 bg-slate-900/80 rounded border border-slate-700 shadow-inner">
+                    <label class="text-xs text-sky-400 font-semibold mb-2 block flex items-center gap-2" id="lbl-res-canvas">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        Resolución del Lienzo
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="number" id="canvas-w" value="1920" onchange="updateResolution()" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white focus:border-sky-500 outline-none transition">
+                        <span class="text-slate-400 self-center text-xs">x</span>
+                        <input type="number" id="canvas-h" value="1080" onchange="updateResolution()" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white focus:border-sky-500 outline-none transition">
+                    </div>
+                    
+                    <label class="text-xs text-amber-400 font-semibold mt-4 mb-2 block flex items-center gap-2" id="lbl-win-scale">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                        Escala de Windows (%)
+                    </label>
+                    <input type="number" id="windows-scale" value="150" onchange="updateResolution()" class="w-full bg-slate-800 border border-amber-600/50 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none transition">
+                </div>
+
+                <div class="mt-2 text-xs text-slate-400 p-3 bg-slate-900/50 rounded border border-slate-800">
+                    <button onclick="document.getElementById('importBg').click()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-200 transition font-medium flex items-center justify-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span id="lbl-bg-btn">Subir Wallpaper</span>
+                    </button>
+                    <input type="file" id="importBg" class="hidden" accept="image/*" onchange="importBackgroundBtn(event)">
+                    
+                    <div id="bg-zoom-container" class="hidden mt-3 pt-3 border-t border-slate-700/50">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-400" id="lbl-bg-zoom">Zoom Fondo</label>
+                            <span id="bg-zoom-val" class="text-xs text-sky-400 font-mono">100%</span>
+                        </div>
+                        <input type="range" id="bg-zoom" min="10" max="300" value="100" class="w-full accent-sky-500" oninput="updateBgZoom()">
+                        <div class="flex justify-between mt-1">
+                            <button onclick="setBgMode('cover')" class="text-[10px] text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded transition" id="btn-bg-cover">Rellenar</button>
+                            <button onclick="setBgMode('contain')" class="text-[10px] text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded transition" id="btn-bg-fit">Ajustar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <button onclick="togglePanel('leftPanel')" class="absolute left-0 top-1/2 -translate-y-1/2 bg-slate-800 p-2 rounded-r-lg z-30 border border-l-0 border-slate-700 hover:bg-slate-700">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        <div class="flex-1 w-full h-full p-4 md:p-8 flex items-center justify-center relative z-0">
+            <div id="canvas-wrapper" class="relative w-full max-w-full flex items-center justify-center" style="aspect-ratio: 1920 / 1080;">
+                <div id="canvas" class="w-full h-full rounded shadow-2xl relative">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 font-medium text-lg pointer-events-none" id="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mb-4 opacity-50"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span id="lbl-empty-state">Añade un fondo y empieza a crear</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <aside id="rightPanel" class="glass-panel w-80 absolute right-0 top-0 bottom-0 z-40 menu-transition flex flex-col translate-x-0">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <button onclick="togglePanel('rightPanel')" class="text-slate-400 hover:text-white"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+                <div class="flex gap-2">
+                    <button onclick="switchRightTab('props')" id="tab-props" class="px-2 py-1 text-sky-400 font-semibold border-b-2 border-sky-400 transition">Propiedades</button>
+                    <button onclick="switchRightTab('code')" id="tab-code" class="px-2 py-1 text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition">Exportación</button>
+                </div>
+            </div>
+            
+            <div id="content-props" class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+                <div id="no-selection" class="text-center text-slate-500 py-10">
+                    <span id="lbl-no-sel">Selecciona un widget para editar.</span><br><br>
+                    <span class="text-xs opacity-50" id="lbl-no-sel-sub">(Puedes presionar Supr / Delete para borrar)</span>
+                </div>
+                <div id="properties-form" class="hidden flex-col gap-4"></div>
+                <button id="delete-widget-btn" onclick="deleteSelected()" class="hidden w-full py-2 mt-4 bg-red-900/30 text-red-400 border border-red-900 hover:bg-red-900/50 rounded transition">
+                    <span id="lbl-del-btn">Eliminar Widget (Tecla Supr)</span>
+                </button>
+                <div class="ad-slot" style="margin-top:18px;min-height:170px;border:1px dashed #475569;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:12px;text-align:center;color:#64748b;font-size:11px;gap:5px"><span>Espacio publicitario · Banner</span><small>Solo Banner estático; sin Popunder ni redirecciones automáticas.</small><!-- Inserta aquí el código Banner de Adsterra aprobado. --></div>
+            </div>
+
+            <div id="content-code" class="hidden flex-1 overflow-y-auto p-4 bg-[#0d1117]">
+                <div class="rounded-xl border border-slate-700 bg-slate-900 p-4"><h3 class="text-sm font-semibold text-sky-300 mb-2">Generación en servidor</h3><p class="text-xs text-slate-400">El código .ini no se muestra ni se edita en el navegador. Al exportar, la plantilla se procesa en el servidor después de verificar tu sesión y tus créditos.</p><p class="text-xs text-slate-400 mt-3">Skin Studio: 30 créditos por exportación. Puedes guardar tu proyecto para seguir editándolo luego.</p></div>
+                <div class="ad-slot" style="margin-top:16px;min-height:250px;border:1px dashed #475569;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:12px;text-align:center;color:#64748b;font-size:11px;gap:5px"><span>Espacio publicitario · Banner</span><small>Sin Popunder ni redirecciones automáticas añadidas por el sitio.</small><!-- Inserta aquí el código Banner de Adsterra aprobado. --></div>
+                <code id="ini-preview" class="hidden"></code>
+            </div>
+        </aside>
+        
+        <button onclick="togglePanel('rightPanel')" class="absolute right-0 top-1/2 -translate-y-1/2 bg-slate-800 p-2 rounded-l-lg z-30 border border-r-0 border-slate-700 hover:bg-slate-700">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+
+    </main>
+
+    <script>
+        let currentLang = 'es';
+        const t = (es, en) => currentLang === 'es' ? es : en;
+
+        function toggleLang() {
+            currentLang = currentLang === 'es' ? 'en' : 'es';
+            document.getElementById('lang-btn').innerText = currentLang === 'es' ? 'ES' : 'EN';
+            updateLanguageUI();
+            buildPropertiesForm();
+        }
+
+        function updateLanguageUI() {
+            document.getElementById('lbl-load-zip').innerText = t('Cargar ZIP', 'Load ZIP');
+            document.getElementById('lbl-add-font').innerText = t('Fuente .ttf', 'Font .ttf');
+            document.getElementById('lbl-export-zip').innerText = t('Exportar ZIP', 'Export ZIP');
+            document.getElementById('lbl-add-widget').innerText = t('Añadir Widget', 'Add Widget');
+            document.getElementById('lbl-w-clock').innerText = t('Reloj', 'Clock');
+            document.getElementById('lbl-w-date').innerText = t('Fecha', 'Date');
+            document.getElementById('lbl-w-weather').innerText = t('Clima Global (Wttr)', 'Global Weather (Wttr)');
+            document.getElementById('lbl-w-cpu').innerText = t('Uso de CPU', 'CPU Usage');
+            document.getElementById('lbl-w-ram').innerText = t('Uso de RAM', 'RAM Usage');
+            document.getElementById('lbl-w-net').innerText = t('Uso de Red', 'Network Usage');
+            document.getElementById('lbl-w-batt').innerText = t('Batería', 'Battery');
+            document.getElementById('lbl-w-text').innerText = t('Texto Libre', 'Free Text');
+            
+            document.getElementById('lbl-res-canvas').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>` + t('Resolución del Lienzo', 'Canvas Resolution');
+            document.getElementById('lbl-win-scale').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>` + t('Escala de Windows (%)', 'Windows Scale (%)');
+            document.getElementById('lbl-bg-btn').innerText = t('Subir Wallpaper', 'Upload Wallpaper');
+            if(document.getElementById('lbl-bg-zoom')) document.getElementById('lbl-bg-zoom').innerText = t('Zoom Fondo', 'Bg Zoom');
+            if(document.getElementById('btn-bg-cover')) document.getElementById('btn-bg-cover').innerText = t('Rellenar', 'Cover');
+            if(document.getElementById('btn-bg-fit')) document.getElementById('btn-bg-fit').innerText = t('Ajustar', 'Fit');
+            
+            document.getElementById('lbl-empty-state').innerText = t('Añade un fondo y empieza a crear', 'Add a background and start creating');
+            document.getElementById('tab-props').innerText = t('Propiedades', 'Properties');
+            document.getElementById('tab-code').innerText = t('Exportación segura', 'Secure export');
+            document.getElementById('lbl-no-sel').innerText = t('Selecciona un widget para editar.', 'Select a widget to edit.');
+            document.getElementById('lbl-no-sel-sub').innerText = t('(Puedes presionar Supr / Delete para borrar)', '(You can press Del / Delete to remove)');
+            document.getElementById('lbl-del-btn').innerText = t('Eliminar Widget (Tecla Supr)', 'Delete Widget (Del Key)');
+        }
+
+        let LOGICAL_WIDTH = 1920;
+        let LOGICAL_HEIGHT = 1080;
+
+        let state = {
+            backgroundUrl: null,
+            widgets: [],
+            selectedId: null,
+            customFonts: []
+        };
+
+        const canvas = document.getElementById('canvas');
+        const emptyState = document.getElementById('empty-state');
+        const propsForm = document.getElementById('properties-form');
+        const noSelection = document.getElementById('no-selection');
+        const deleteBtn = document.getElementById('delete-widget-btn');
+        const iniPreview = document.getElementById('ini-preview');
+
+        const availableFonts = ['Arial', 'Segoe UI', 'Consolas', 'Impact', 'Trebuchet MS', 'Times New Roman', 'Courier New'];
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'Delete' || e.key === 'Backspace') && state.selectedId) {
+                const tag = document.activeElement.tagName;
+                if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+                    deleteSelected();
+                }
+            }
+        });
+
+        function updateResolution() {
+            LOGICAL_WIDTH = parseInt(document.getElementById('canvas-w').value) || 1920;
+            LOGICAL_HEIGHT = parseInt(document.getElementById('canvas-h').value) || 1080;
+            document.getElementById('canvas-wrapper').style.aspectRatio = `${LOGICAL_WIDTH} / ${LOGICAL_HEIGHT}`;
+            renderCanvas();
+            updateINI();
+        }
+
+        function togglePanel(id) {
+            const el = document.getElementById(id);
+            if (id === 'leftPanel') el.classList.toggle('-translate-x-full');
+            else el.classList.toggle('translate-x-full');
+        }
+
+        function switchRightTab(tab) {
+            const tabProps = document.getElementById('tab-props'), tabCode = document.getElementById('tab-code');
+            const contentProps = document.getElementById('content-props'), contentCode = document.getElementById('content-code');
+            if (tab === 'props') {
+                tabProps.className = "px-2 py-1 text-sky-400 font-semibold border-b-2 border-sky-400 transition";
+                tabCode.className = "px-2 py-1 text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition";
+                contentProps.classList.remove('hidden'); contentProps.classList.add('flex'); contentCode.classList.add('hidden');
+            } else {
+                tabCode.className = "px-2 py-1 text-sky-400 font-semibold border-b-2 border-sky-400 transition";
+                tabProps.className = "px-2 py-1 text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition";
+                contentCode.classList.remove('hidden'); contentProps.classList.remove('flex'); contentProps.classList.add('hidden');
+            }
+        }
+
+        function importBackgroundBtn(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                if (file.size > 2_500_000) { alert('El fondo de previsualización debe pesar 2.5 MB o menos.'); event.target.value=''; return; }
+                const reader = new FileReader();
+                reader.onload = (e) => { state.backgroundUrl = e.target.result; applyBackground(); };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function applyBackground() {
+            if (state.backgroundUrl) {
+                canvas.style.backgroundImage = `url(${state.backgroundUrl})`;
+                emptyState.style.display = 'none';
+                document.getElementById('bg-zoom-container').classList.remove('hidden');
+                updateBgZoom();
+            } else {
+                canvas.style.backgroundImage = 'none';
+                emptyState.style.display = 'flex';
+                document.getElementById('bg-zoom-container').classList.add('hidden');
+            }
+        }
+
+        function updateBgZoom() {
+            const val = document.getElementById('bg-zoom').value;
+            document.getElementById('bg-zoom-val').innerText = val + '%';
+            if (state.backgroundUrl) {
+                canvas.style.backgroundSize = val + '%';
+            }
+        }
+
+        function setBgMode(mode) {
+            document.getElementById('bg-zoom').value = 100; // Reset visual slider
+            document.getElementById('bg-zoom-val').innerText = mode === 'cover' ? t('Rellenar', 'Cover') : t('Ajustar', 'Fit');
+            if (state.backgroundUrl) {
+                canvas.style.backgroundSize = mode;
+            }
+        }
+
+        function generateId() { return 'widget_' + Math.random().toString(36).substr(2, 9); }
+
+        function addWidget(type, subType = null) {
+            const newWidget = {
+                id: generateId(), type: type, name: `${type}${state.widgets.filter(w => w.type === type).length + 1}`,
+                x: Math.round(LOGICAL_WIDTH / 2), y: Math.round(LOGICAL_HEIGHT / 2),
+                color: '#ffffff', fontSize: 48, fontFamily: 'Segoe UI', opacity: 255, spacing: 0, align: 'left'
+            };
+
+            if (type === 'Clock') newWidget.format = '24h-mm'; 
+            else if (type === 'Date') newWidget.format = 'full';
+            else if (type === 'Weather') newWidget.weatherFormat = 'loc-temp';
+            else if (type === 'Resource') {
+                newWidget.subType = subType || 'CPU'; newWidget.visualStyle = 'Text'; 
+                newWidget.graphBgColor = '#000000'; newWidget.graphBgOpacity = 100;
+                newWidget.width = 150; newWidget.height = 150;
+                newWidget.lineWidth = 2; newWidget.thickness = 15;
+            } else if (type === 'Text') newWidget.text = t('Tu texto aqui', 'Your text here');
+
+            state.widgets.push(newWidget); state.selectedId = newWidget.id;
+            renderCanvas(); buildPropertiesForm(); updateINI();
+        }
+
+        function deleteSelected() {
+            if (!state.selectedId) return;
+            state.widgets = state.widgets.filter(w => w.id !== state.selectedId);
+            state.selectedId = null;
+            renderCanvas(); buildPropertiesForm(); updateINI();
+        }
+
+        function renderCanvas() {
+            const currentWidgets = canvas.querySelectorAll('.widget-element');
+            currentWidgets.forEach(w => w.remove());
+
+            const scaleX = canvas.clientWidth / LOGICAL_WIDTH;
+            const ws = (parseInt(document.getElementById('windows-scale').value) || 100) / 100;
+
+            state.widgets.forEach(widget => {
+                const el = document.createElement('div');
+                el.className = `widget-element ${state.selectedId === widget.id ? 'selected' : ''}`;
+                el.dataset.id = widget.id;
+                
+                el.style.left = `${(widget.x / LOGICAL_WIDTH) * 100}%`;
+                el.style.top = `${(widget.y / LOGICAL_HEIGHT) * 100}%`;
+                
+                if(widget.align === 'center') { el.style.transform = `translateX(-50%)`; }
+                else if(widget.align === 'right') { el.style.transform = `translateX(-100%)`; }
+                else { el.style.transform = `none`; }
+                
+                el.style.textAlign = widget.align;
+
+                const logicalPx = (widget.fontSize * 1.333) * ws; 
+                el.style.fontSize = `${logicalPx * scaleX}px`;
+                el.style.color = widget.color; el.style.fontFamily = widget.fontFamily;
+                el.style.letterSpacing = `${widget.spacing}px`; el.style.opacity = widget.opacity / 255;
+                el.style.transformOrigin = "top left";
+                
+                el.innerHTML = getWidgetPreviewContent(widget, scaleX, ws);
+
+                el.addEventListener('mousedown', startDrag);
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (state.selectedId !== widget.id) { state.selectedId = widget.id; renderCanvas(); buildPropertiesForm(); }
+                });
+                canvas.appendChild(el);
+            });
+        }
+
+        function getWidgetPreviewContent(w, scaleX, ws) {
+            const d = new Date();
+            const getRgba = (hex, alpha) => {
+                const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r},${g},${b},${alpha/255})`;
+            };
+            const mainColor = getRgba(w.color, w.opacity);
+            const bgColor = w.type === 'Resource' ? getRgba(w.graphBgColor, w.graphBgOpacity) : 'transparent';
+            const resetStyle = `line-height: 1; padding: 0; margin: 0; width: max-content;`;
+
+            if (w.type === 'Clock') {
+                let h = d.getHours(), m = d.getMinutes().toString().padStart(2, '0'), s = d.getSeconds().toString().padStart(2, '0');
+                let ampm = h >= 12 ? ' PM' : ' AM';
+                let h12 = (h % 12 || 12).toString().padStart(2, '0'), h24 = h.toString().padStart(2, '0');
+                let textContent = '';
+                switch(w.format) {
+                    case '12h-mm': textContent = `${h12}:${m}${ampm}`; break;
+                    case '12h-ss': textContent = `${h12}:${m}:${s}${ampm}`; break;
+                    case '24h-ss': textContent = `${h24}:${m}:${s}`; break;
+                    case 'hour-only': textContent = `${h24}`; break;
+                    case 'min-only': textContent = `${m}`; break;
+                    case 'multiline': textContent = `${h24}<br>${m}`; break;
+                    case '24h-mm': default: textContent = `${h24}:${m}`; break;
+                }
+                return `<div style="${resetStyle}">${textContent}</div>`;
+            }
+            if (w.type === 'Date') {
+                const options = {}; let textContent = '';
+                switch(w.format) {
+                    case 'day': options.weekday = 'long'; break;
+                    case 'day-date': options.weekday = 'long'; options.day = 'numeric'; break;
+                    case 'ddmmyyyy': textContent = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}`; break;
+                    case 'month-year': options.month = 'long'; options.year = 'numeric'; break;
+                    case 'full': default: options.weekday = 'long'; options.year = 'numeric'; options.month = 'long'; options.day = 'numeric'; break;
+                }
+                if(!textContent) textContent = d.toLocaleDateString('en-US', options); 
+                return `<div style="${resetStyle}">${textContent}</div>`;
+            }
+            if (w.type === 'Weather') {
+                let textContent = '';
+                switch(w.weatherFormat) {
+                    case 'loc-temp': textContent = `New York: +22°C`; break;
+                    case 'temp-only': textContent = `+22°C`; break;
+                    case 'loc-only': textContent = `New York, US`; break;
+                    case 'cond-temp': textContent = `Clear +22°C`; break;
+                    case 'multiline': textContent = `New York<br>+22°C`; break;
+                }
+                return `<div style="${resetStyle}">${textContent}</div>`;
+            }
+            if (w.type === 'Resource') {
+                const wPx = (w.width || 150) * ws * scaleX;
+                const hPx = (w.height || 150) * ws * scaleX;
+                if (w.visualStyle === 'Text') {
+                    let prefix = w.subType === 'Network' ? 'Net: ' : (w.subType === 'Battery' ? '' : `${w.subType}: `);
+                    let postfix = w.subType === 'RAM' ? ' G' : '%';
+                    let previewVal = w.subType === 'Battery' ? '85' : '42.5';
+                    return `<div style="${resetStyle}">${prefix}${previewVal}${postfix}</div>`;
+                } else if (w.visualStyle === 'Line') {
+                    const lw = (w.lineWidth || 2) * ws * scaleX;
+                    return `<div style="width:${wPx}px; height:${hPx}px; background:${bgColor}; position:relative; overflow:hidden;">
+                                <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 100 100">
+                                    <polyline points="0,100 20,60 40,80 60,30 80,50 100,10 100,100" fill="none" stroke="${mainColor}" stroke-width="${lw}" vector-effect="non-scaling-stroke"/>
+                                </svg>
+                            </div>`;
+                } else if (w.visualStyle === 'Circle') {
+                    const size = Math.min(wPx, hPx); const scaledThickness = (w.thickness || 15) * ws * scaleX;
+                    const strokeWidth = Math.max(1, scaledThickness); 
+                    const r = (size / 2) - (strokeWidth / 2); const circum = 2 * Math.PI * r; const offset = circum - (42 / 100) * circum; 
+                    return `<div style="width:${wPx}px; height:${hPx}px; display:flex; align-items:center; justify-content:center; position:relative;">
+                                <svg width="${wPx}" height="${hPx}" viewBox="0 0 ${wPx} ${hPx}">
+                                    <circle cx="${wPx/2}" cy="${hPx/2}" r="${r}" fill="none" stroke="${bgColor}" stroke-width="${strokeWidth}"/>
+                                    <circle cx="${wPx/2}" cy="${hPx/2}" r="${r}" fill="none" stroke="${mainColor}" stroke-width="${strokeWidth}" stroke-dasharray="${circum}" stroke-dashoffset="${offset}" transform="rotate(-90 ${wPx/2} ${hPx/2})"/>
+                                </svg>
+                            </div>`;
+                }
+            }
+            if (w.type === 'Text') {
+                let htmlFormatted = (w.text || 'Texto').replace(/\n/g, '<br>');
+                return `<div style="${resetStyle}">${htmlFormatted}</div>`;
+            }
+            return '';
+        }
+
+        let isDragging = false, dragTarget = null, dragOffsetX = 0, dragOffsetY = 0;
+        
+        function startDrag(e) {
+            if(e.button !== 0) return; e.stopPropagation();
+            isDragging = true; dragTarget = state.widgets.find(w => w.id === e.currentTarget.dataset.id);
+            state.selectedId = dragTarget.id;
+            const elRect = e.currentTarget.getBoundingClientRect(); dragOffsetX = e.clientX - elRect.left; dragOffsetY = e.clientY - elRect.top;
+            buildPropertiesForm(); renderCanvas();
+            document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', endDrag);
+        }
+
+        function onDrag(e) {
+            if (!isDragging || !dragTarget) return;
+            const rect = canvas.getBoundingClientRect();
+            let xPos = (e.clientX - rect.left) - dragOffsetX; let yPos = (e.clientY - rect.top) - dragOffsetY;
+            const el = document.querySelector(`.widget-element[data-id="${dragTarget.id}"]`);
+            if (el) {
+                const elRect = el.getBoundingClientRect();
+                if(dragTarget.align === 'center') xPos += elRect.width / 2;
+                if(dragTarget.align === 'right') xPos += elRect.width;
+            }
+            dragTarget.x = Math.round((xPos / rect.width) * LOGICAL_WIDTH);
+            dragTarget.y = Math.round((yPos / rect.height) * LOGICAL_HEIGHT);
+            renderCanvas();
+        }
+
+        function endDrag() {
+            isDragging = false; dragTarget = null;
+            document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', endDrag);
+            updateINI(); buildPropertiesForm(); 
+        }
+
+        function buildPropertiesForm() {
+            if (!state.selectedId) {
+                noSelection.style.display = 'block'; propsForm.style.display = 'none'; deleteBtn.style.display = 'none'; return;
+            }
+            const w = state.widgets.find(wi => wi.id === state.selectedId); if (!w) return;
+            noSelection.style.display = 'none'; propsForm.style.display = 'flex'; deleteBtn.style.display = 'block';
+
+            let html = `
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs text-slate-400">${t('Nombre', 'Name')}</label>
+                    <input type="text" id="prop-name" value="${w.name}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm focus:border-sky-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="flex flex-col gap-1"><label class="text-xs text-slate-400">X (Ref)</label><input type="number" id="prop-x" value="${w.x}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-slate-500" disabled></div>
+                    <div class="flex flex-col gap-1"><label class="text-xs text-slate-400">Y (Ref)</label><input type="number" id="prop-y" value="${w.y}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-slate-500" disabled></div>
+                </div>
+            `;
+
+            if (w.type !== 'Resource' || w.visualStyle === 'Text') {
+                html += `
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="flex flex-col gap-1"><label class="text-xs text-slate-400">${t('Tamaño (pt)', 'Size (pt)')}</label><input type="number" id="prop-fontSize" value="${w.fontSize}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"></div>
+                    <div class="flex flex-col gap-1"><label class="text-xs text-slate-400">${t('Color', 'Color')}</label><input type="color" id="prop-color" value="${w.color}" class="bg-slate-900 border border-slate-700 rounded h-7 w-full cursor-pointer"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs text-slate-400">${t('Alineación', 'Align')}</label>
+                        <select id="prop-align" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm outline-none focus:border-sky-500">
+                            <option value="left" ${w.align === 'left' ? 'selected' : ''}>${t('Izquierda', 'Left')}</option>
+                            <option value="center" ${w.align === 'center' ? 'selected' : ''}>${t('Centro', 'Center')}</option>
+                            <option value="right" ${w.align === 'right' ? 'selected' : ''}>${t('Derecha', 'Right')}</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1"><label class="text-xs text-slate-400">${t('Opacidad', 'Opacity')}</label><input type="range" id="prop-opacity" min="1" max="255" value="${w.opacity}" class="accent-sky-500 mt-2"></div>
+                </div>
+                <div class="flex flex-col gap-1 mt-1">
+                    <label class="text-xs text-slate-400">${t('Fuente', 'Font')}</label>
+                    <select id="prop-fontFamily" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm outline-none focus:border-sky-500">
+                        ${availableFonts.map(f => `<option value="${f}" ${w.fontFamily === f ? 'selected' : ''}>${f}</option>`).join('')}
+                        ${state.customFonts.map(f => `<option value="${f.name}" ${w.fontFamily === f.name ? 'selected' : ''}>${f.name} (Import)</option>`).join('')}
+                    </select>
+                </div>`;
+            } else {
+                 html += `<div class="flex flex-col gap-1"><label class="text-xs text-slate-400">${t('Color Gráfico', 'Graph Color')}</label><input type="color" id="prop-color" value="${w.color}" class="bg-slate-900 border border-slate-700 rounded h-7 w-full cursor-pointer"></div>
+                 <div class="flex flex-col gap-1 mt-1"><label class="text-xs text-slate-400">${t('Opacidad', 'Opacity')}</label><input type="range" id="prop-opacity" min="1" max="255" value="${w.opacity}" class="accent-sky-500"></div>`;
+            }
+
+            if (w.type === 'Clock') {
+                html += `<div class="flex flex-col gap-1 mt-2 border-t border-slate-700 pt-3">
+                        <label class="text-xs text-sky-400 font-semibold mb-1">${t('Formato de Hora', 'Time Format')}</label>
+                        <select id="prop-format" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm outline-none">
+                            <option value="24h-mm" ${w.format === '24h-mm' ? 'selected' : ''}>24H (HH:MM)</option>
+                            <option value="24h-ss" ${w.format === '24h-ss' ? 'selected' : ''}>24H + Sec</option>
+                            <option value="12h-mm" ${w.format === '12h-mm' ? 'selected' : ''}>12H (AM/PM)</option>
+                            <option value="12h-ss" ${w.format === '12h-ss' ? 'selected' : ''}>12H + Sec</option>
+                            <option value="hour-only" ${w.format === 'hour-only' ? 'selected' : ''}>${t('Solo Horas (01)', 'Hours Only')}</option>
+                            <option value="min-only" ${w.format === 'min-only' ? 'selected' : ''}>${t('Solo Minutos (42)', 'Minutes Only')}</option>
+                            <option value="multiline" ${w.format === 'multiline' ? 'selected' : ''}>${t('Multilínea', 'Multiline')}</option>
+                        </select>
+                    </div>`;
+            } else if (w.type === 'Date') {
+                html += `<div class="flex flex-col gap-1 mt-2 border-t border-slate-700 pt-3">
+                        <label class="text-xs text-sky-400 font-semibold mb-1">${t('Formato de Fecha', 'Date Format')}</label>
+                        <select id="prop-format" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm outline-none">
+                            <option value="full" ${w.format === 'full' ? 'selected' : ''}>Full (Thursday, Oct 8, 2026)</option>
+                            <option value="day" ${w.format === 'day' ? 'selected' : ''}>Day (Thursday)</option>
+                            <option value="day-date" ${w.format === 'day-date' ? 'selected' : ''}>Day & Num (Thursday 8)</option>
+                            <option value="month-year" ${w.format === 'month-year' ? 'selected' : ''}>Month & Year (October 2026)</option>
+                            <option value="ddmmyyyy" ${w.format === 'ddmmyyyy' ? 'selected' : ''}>Short (08/10/2026)</option>
+                        </select>
+                    </div>`;
+            } else if (w.type === 'Weather') {
+                 html += `<div class="flex flex-col gap-1 mt-2 border-t border-slate-700 pt-3">
+                        <label class="text-xs text-sky-400 font-semibold mb-1">${t('Formato del Clima Global', 'Weather Format')}</label>
+                        <select id="prop-weatherFormat" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm outline-none">
+                            <option value="loc-temp" ${w.weatherFormat === 'loc-temp' ? 'selected' : ''}>City & Temp (Madrid: +22°C)</option>
+                            <option value="temp-only" ${w.weatherFormat === 'temp-only' ? 'selected' : ''}>Temp Only (+22°C)</option>
+                            <option value="loc-only" ${w.weatherFormat === 'loc-only' ? 'selected' : ''}>City Only (Madrid, Spain)</option>
+                            <option value="cond-temp" ${w.weatherFormat === 'cond-temp' ? 'selected' : ''}>Cond & Temp (Clear +22°C)</option>
+                            <option value="multiline" ${w.weatherFormat === 'multiline' ? 'selected' : ''}>Multiline</option>
+                        </select>
+                    </div>`;
+            } else if (w.type === 'Resource') {
+                html += `<div class="flex flex-col gap-1 mt-2 border-t border-slate-700 pt-3">
+                        <label class="text-xs text-sky-400 font-semibold mb-1">${t('Estilo Visual', 'Visual Style')}</label>
+                        <select id="prop-visualStyle" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm outline-none">
+                            <option value="Text" ${w.visualStyle === 'Text' ? 'selected' : ''}>${t('Texto', 'Text')}</option>
+                            <option value="Line" ${w.visualStyle === 'Line' ? 'selected' : ''}>${t('Línea', 'Line')}</option>
+                            <option value="Circle" ${w.visualStyle === 'Circle' ? 'selected' : ''}>${t('Círculo', 'Circle')}</option>
+                        </select>
+                    </div>`;
+                if (w.visualStyle !== 'Text') {
+                    html += `<div class="grid grid-cols-2 gap-2 mt-2">
+                            <div class="flex flex-col gap-1"><label class="text-xs text-slate-400">${t('Ancho', 'Width')} (px)</label><input type="number" id="prop-width" value="${w.width}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"></div>
+                            <div class="flex flex-col gap-1"><label class="text-xs text-slate-400">${t('Alto', 'Height')} (px)</label><input type="number" id="prop-height" value="${w.height}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"></div>
+                        </div>`;
+                    if (w.visualStyle === 'Line') html += `<div class="flex flex-col gap-1 mt-2"><label class="text-xs text-slate-400">${t('Grosor Línea', 'Line Width')} (px)</label><input type="number" id="prop-lineWidth" value="${w.lineWidth || 2}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"></div>`;
+                    else if (w.visualStyle === 'Circle') html += `<div class="flex flex-col gap-1 mt-2"><label class="text-xs text-slate-400">${t('Grosor Anillo', 'Ring Thick')} (px)</label><input type="number" id="prop-thickness" value="${w.thickness || 15}" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"></div>`;
+                    html += `<div class="grid grid-cols-2 gap-2 mt-2">
+                            <div class="flex flex-col gap-1"><label class="text-xs text-slate-400">${t('Color Fondo', 'Bg Color')}</label><input type="color" id="prop-graphBgColor" value="${w.graphBgColor}" class="bg-slate-900 border border-slate-700 rounded h-7 w-full cursor-pointer"></div>
+                            <div class="flex flex-col gap-1"><label class="text-xs text-slate-400">${t('Opacidad Fdo', 'Bg Opacity')}</label><input type="range" id="prop-graphBgOpacity" min="0" max="255" value="${w.graphBgOpacity}" class="accent-sky-500 mt-1"></div>
+                        </div>`;
+                }
+            } else if (w.type === 'Text') {
+                html += `<div class="flex flex-col gap-1 mt-2 border-t border-slate-700 pt-3">
+                        <label class="text-xs text-sky-400 font-semibold mb-1">${t('Texto', 'Text')}</label>
+                        <textarea id="prop-text" rows="3" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm outline-none focus:border-sky-500">${w.text}</textarea>
+                    </div>`;
+            }
+
+            propsForm.innerHTML = html; attachPropertyListeners();
+        }
+
+        function attachPropertyListeners() {
+            const w = state.widgets.find(wi => wi.id === state.selectedId); if (!w) return;
+            const bindInput = (id, prop, isNumber = false, isCheckbox = false, refreshUI = false) => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', (e) => {
+                    if (isCheckbox) w[prop] = e.target.checked;
+                    else if (isNumber) w[prop] = parseInt(e.target.value) || 0;
+                    else w[prop] = e.target.value;
+                    if(refreshUI) buildPropertiesForm();
+                    renderCanvas(); updateINI();
+                });
+            };
+            bindInput('prop-name', 'name');
+            bindInput('prop-fontSize', 'fontSize', true); bindInput('prop-color', 'color');
+            bindInput('prop-fontFamily', 'fontFamily'); bindInput('prop-opacity', 'opacity', true);
+            bindInput('prop-align', 'align'); bindInput('prop-format', 'format'); bindInput('prop-weatherFormat', 'weatherFormat');
+            bindInput('prop-visualStyle', 'visualStyle', false, false, true); bindInput('prop-width', 'width', true);
+            bindInput('prop-height', 'height', true); bindInput('prop-lineWidth', 'lineWidth', true);
+            bindInput('prop-thickness', 'thickness', true); bindInput('prop-graphBgColor', 'graphBgColor');
+            bindInput('prop-graphBgOpacity', 'graphBgOpacity', true); bindInput('prop-text', 'text');
+        }
+
+        function getRainmeterRGB(hex, alpha = 255) {
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.substring(0,2), 16) || 0, g = parseInt(hex.substring(2,4), 16) || 0, b = parseInt(hex.substring(4,6), 16) || 0;
+            return `${r},${g},${b},${alpha}`;
+        }
+
+        function updateINI() {
+            // INI templates and compilation remain on the server; never render them in client-side DOM.
+            if (iniPreview) iniPreview.textContent = '';
+        }
+
+        async function importFont(event) {
+            const file = event.target.files[0]; if (!file) return;
+            if (state.customFonts.length >= 4) { alert('Puedes importar un máximo de 4 fuentes por proyecto.'); event.target.value=''; return; }
+            if (file.size > 1_000_000) { alert('Cada archivo de fuente debe pesar 1 MB o menos.'); event.target.value=''; return; }
+            const buffer = await file.arrayBuffer(), fontName = file.name.split('.')[0], fontUrl = URL.createObjectURL(file);
+            const newStyle = document.createElement('style');
+            newStyle.appendChild(document.createTextNode(`@font-face { font-family: '${fontName}'; src: url('${fontUrl}'); }`));
+            document.head.appendChild(newStyle);
+            state.customFonts.push({ name: fontName, fileName: file.name, buffer: buffer });
+            buildPropertiesForm();
+        }
+
+        async function importZIP(event) {
+            const file = event.target.files[0]; if (!file) return;
+            try {
+                const zip = await JSZip.loadAsync(file); let jsonEntry = null;
+                zip.forEach((relativePath, zipEntry) => { if (relativePath.endsWith("SkinData.json")) jsonEntry = zipEntry; });
+                if (jsonEntry) {
+                    const content = await jsonEntry.async("string"), parsedState = JSON.parse(content);
+                    state.widgets = parsedState.widgets || []; state.selectedId = null;
+                    if(parsedState.customFonts) state.customFonts = parsedState.customFonts; 
+                    renderCanvas(); buildPropertiesForm(); updateINI();
+                }
+            } catch(err) { console.error(err); }
+        }
+
+        function bufferToBase64(buffer) {
+            if (!buffer) return '';
+            const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : new Uint8Array(buffer.buffer || buffer);
+            let binary = ''; for (let i=0;i<bytes.length;i+=0x8000) binary += String.fromCharCode(...bytes.subarray(i,i+0x8000));
+            return btoa(binary);
+        }
+        function base64ToBuffer(value) {
+            const binary=atob(value||'');const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return bytes.buffer;
+        }
+        window.__RM_GET_STATE = async () => ({
+            studio: 'skin', name: document.getElementById('skin-name').value || 'MiCustomSkin',
+            config: {
+                skinName: document.getElementById('skin-name').value || 'MiCustomSkin',
+                widgets: state.widgets,
+                logicalWidth: LOGICAL_WIDTH,
+                logicalHeight: LOGICAL_HEIGHT,
+                windowsScale: parseInt(document.getElementById('windows-scale').value) || 100,
+                backgroundUrl: state.backgroundUrl || null,
+                bgZoom: parseInt(document.getElementById('bg-zoom').value) || 100,
+                customFonts: await Promise.all((state.customFonts || []).map(async f => ({name:f.name,fileName:f.fileName,base64:bufferToBase64(f.buffer)})))
+            }
+        });
+        window.__RM_LOAD_STATE = async (project) => {
+            if (!project || project.studio !== 'skin') throw new Error('El proyecto no pertenece a Skin Studio.');
+            const config=project.config||{};
+            document.getElementById('skin-name').value=project.name||config.skinName||'MiCustomSkin';
+            LOGICAL_WIDTH=parseInt(config.logicalWidth)||1920;LOGICAL_HEIGHT=parseInt(config.logicalHeight)||1080;
+            document.getElementById('canvas-w').value=LOGICAL_WIDTH;document.getElementById('canvas-h').value=LOGICAL_HEIGHT;
+            document.getElementById('windows-scale').value=parseInt(config.windowsScale)||100;
+            document.getElementById('canvas-wrapper').style.aspectRatio=`${LOGICAL_WIDTH} / ${LOGICAL_HEIGHT}`;
+            state.widgets=Array.isArray(config.widgets)?config.widgets:[];state.selectedId=null;
+            state.backgroundUrl=typeof config.backgroundUrl==='string' && config.backgroundUrl.startsWith('data:image/') ? config.backgroundUrl : null;
+            document.getElementById('bg-zoom').value=parseInt(config.bgZoom)||100;applyBackground();
+            state.customFonts=(config.customFonts||[]).map(f=>({name:f.name,fileName:f.fileName,buffer:f.base64?base64ToBuffer(f.base64):null}));
+            renderCanvas();buildPropertiesForm();updateINI();
+        };
+        async function exportSkin() {
+            try { await window.RMStudioBridge.export(await window.__RM_GET_STATE()); }
+            catch (e) { window.RMStudioBridge?.notice(e.message || 'No se pudo exportar el ZIP.'); }
+        }
+
+        updateLanguageUI(); updateINI();
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script><script src="/assets/firebase-auth.js"></script><script src="/assets/studio-bridge.js"></script>
+</body>
+</html>
