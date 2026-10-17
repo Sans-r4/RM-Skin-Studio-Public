@@ -11,8 +11,12 @@
     const type = response.headers.get('content-type') || '';
     if (!response.ok) {
       let msg = `Request failed (${response.status})`;
-      if (type.includes('application/json')) { const body = await response.json().catch(() => ({})); msg = body.error || msg; }
-      else msg = await response.text().catch(() => msg) || msg;
+      if (type.includes('application/json')) {
+        const body = await response.json().catch(() => ({})); msg = body.error || msg;
+        if (response.status === 403 && /^account suspended$/i.test(String(body.error||''))) {
+          const details=[]; if(body.reason)details.push(`Motivo: ${body.reason}`); if(body.banned_until)details.push(`La suspensión termina: ${new Date(body.banned_until).toLocaleString()}`); else details.push('Duración: indefinida'); if(details.length)msg+=`: ${details.join(' · ')}`;
+        }
+      } else msg = await response.text().catch(() => msg) || msg;
       const error = new Error(msg); error.status = response.status;
       if (response.status === 403 && /account suspended/i.test(msg)) await handleSuspended(msg);
       throw error;
@@ -24,6 +28,15 @@
     if (!node) { node = document.createElement('div'); node.id = 'rm-studio-notice'; node.className = 'rm-studio-notice'; node.setAttribute('role', 'status'); document.body.appendChild(node); }
     node.textContent = String(message || ''); node.classList.add('show'); clearTimeout(window.__rmStudioTimer); window.__rmStudioTimer = setTimeout(() => node.classList.remove('show'), 4500);
   }
+  window.addEventListener('rmss:account-suspended', event => {
+    const data = event.detail || {};
+    const details = [];
+    if (data.reason) details.push(`Motivo: ${data.reason}`);
+    if (data.banned_until) details.push(`La suspensión termina: ${new Date(data.banned_until).toLocaleString()}`);
+    else details.push('Duración: indefinida');
+    handleSuspended(`Account suspended${details.length ? `: ${details.join(' · ')}` : ''}`);
+  });
+
   async function handleSuspended(message) {
     if (suspendedHandling) return;
     suspendedHandling = true;
@@ -32,7 +45,12 @@
     window.RMSS_CURRENT_USER = null;
     document.body.classList.remove('rmss-premium');
     document.querySelectorAll('.ad-slot').forEach(slot => { slot.hidden = true; slot.replaceChildren(); });
-    alert(`Account suspended${message && !/^Account suspended\.?$/i.test(message) ? `: ${message.replace(/^Account suspended:?\s*/i, '')}` : ''}`);
+    const old=document.getElementById('rmss-suspension-dialog');old?.remove();
+    const dialog=document.createElement('dialog');dialog.id='rmss-suspension-dialog';dialog.className='rmss-ban-dialog';
+    const title=document.createElement('h2');title.textContent='Cuenta suspendida';
+    const copy=document.createElement('p');copy.textContent=String(message||'Cuenta suspendida').replace(/^Account suspended:?\s*/i,'')||'La cuenta tiene una suspensión activa.';
+    const button=document.createElement('button');button.type='button';button.className='primary';button.textContent='Entendido';dialog.append(title,copy,button);document.body.appendChild(dialog);
+    await new Promise(resolve=>{let done=false;const finish=()=>{if(done)return;done=true;try{dialog.close()}catch{}dialog.remove();resolve()};button.addEventListener('click',finish);dialog.addEventListener('cancel',e=>{e.preventDefault();finish()});if(dialog.showModal)dialog.showModal();else{alert(`${title.textContent}\n\n${copy.textContent}`);finish()}});
     location.replace('/index.html?account=suspended');
   }
   async function me() {

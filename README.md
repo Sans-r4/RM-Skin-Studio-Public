@@ -56,3 +56,8 @@ La página Descargables enlaza por separado a la colección externa https://sans
 
 ### Recompensas por anuncios
 No premies impresiones/clics de los banners normales de Adsterra usando solo JavaScript. Para dar créditos por ver anuncios, utiliza un proveedor de rewarded ads con confirmación verificable del lado servidor y calcula la recompensa usando ingresos netos reales.
+
+
+## Compatibilidad con backend 0008
+
+Esta versión espera que el Worker privado tenga aplicada la migración D1 0008. Incluye moderación con suspensión temporal, concesiones mensuales Premium y revocación Premium desde Admin. No publiques el frontend actualizado antes de que el Worker y D1 estén listos. Consulta `README-0008-UPGRADE-ES.md` en el backend o el manual de `DOCUMENTACION` dentro del paquete completo.

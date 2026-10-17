@@ -55,11 +55,68 @@
   $('#user-activity-modal')?.addEventListener('click', event => { if (event.target.id === 'user-activity-modal') event.currentTarget.hidden = true; });
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('#user-activity-modal') && !$('#user-activity-modal').hidden) $('#user-activity-modal').hidden = true; });
 
+  function formatBanState(user) {
+    if (Number(user.is_banned) !== 1) return '<span class="status good">Activa</span>';
+    const raw = user.banned_until ? Date.parse(user.banned_until) : NaN;
+    if (!Number.isFinite(raw)) return '<span class="status bad">Suspensión permanente</span>';
+    const remain = raw - Date.now();
+    if (remain <= 0) return `<span class="status bad">Suspensión vencida; se levantará en la siguiente solicitud</span><p class="muted">Venció: ${esc(new Date(raw).toLocaleString())}</p>`;
+    const days = Math.floor(remain / 86400000);
+    const hours = Math.floor((remain % 86400000) / 3600000);
+    const mins = Math.floor((remain % 3600000) / 60000);
+    const left = days ? `${days} d ${hours} h` : hours ? `${hours} h ${mins} min` : `${Math.max(1, mins)} min`;
+    return `<span class="status bad">Suspendida · ${esc(left)}</span><p class="muted">Hasta: ${esc(new Date(raw).toLocaleString())}</p>`;
+  }
+  function premiumIsActive(user) {
+    return Number(user.is_premium) === 1 && (!user.premium_expires_at || Date.parse(user.premium_expires_at) > Date.now());
+  }
+  function closeSuspensionModal() { const modal=$('#suspension-modal'); if(modal) modal.hidden=true; }
+  function openSuspensionModal(user) {
+    $('#suspension-user-id').value=user.id;
+    $('#suspension-user-label').textContent=`${user.username || user.id} · ${user.email || ''}`;
+    $('#suspension-reason').value='';
+    $('#suspension-duration').value='24h';
+    $('#suspension-custom-date').value='';
+    $('#suspension-message').textContent='';
+    $('#suspension-custom-wrap').classList.add('hidden');
+    $('#suspension-modal').hidden=false;
+  }
+  $('#close-suspension-modal')?.addEventListener('click',closeSuspensionModal);
+  $('#cancel-suspension-modal')?.addEventListener('click',closeSuspensionModal);
+  $('#suspension-modal')?.addEventListener('click',event=>{if(event.target.id==='suspension-modal')closeSuspensionModal();});
+  $('#suspension-duration')?.addEventListener('change',()=>$('#suspension-custom-wrap')?.classList.toggle('hidden',$('#suspension-duration').value!=='custom'));
+  $('#suspension-form')?.addEventListener('submit',async event=>{
+    event.preventDefault();
+    const id=$('#suspension-user-id').value;
+    const duration=$('#suspension-duration').value;
+    const reason=$('#suspension-reason').value.trim();
+    let banned_until=null;
+    if(duration==='custom'){
+      const raw=$('#suspension-custom-date').value;
+      if(!raw){$('#suspension-message').textContent='Selecciona una fecha y hora futura.';return;}
+      const date=new Date(raw);
+      if(!Number.isFinite(date.getTime())||date.getTime()<=Date.now()){$('#suspension-message').textContent='La fecha debe estar en el futuro.';return;}
+      banned_until=date.toISOString();
+    }
+    if(!confirm(`¿Suspender a ${$('#suspension-user-label').textContent}?`))return;
+    const submit=$('#suspension-form button[type="submit"]'); submit.disabled=true; $('#suspension-message').textContent='Guardando suspensión…';
+    try{
+      const result=await api(`/api/admin/users/${encodeURIComponent(id)}/ban`,{method:'POST',body:JSON.stringify({banned:true,duration,banned_until,reason})});
+      closeSuspensionModal();
+      notice(result.banned_until?`Cuenta suspendida hasta ${new Date(result.banned_until).toLocaleString()}.`:'Cuenta suspendida indefinidamente.');
+      await loadUsers();
+    }catch(error){$('#suspension-message').textContent=error.message;}
+    finally{submit.disabled=false;}
+  });
   async function loadUsers() {
     const output = $('#admin-user-table'); output.innerHTML = '<div class="empty-state">Cargando usuarios…</div>';
     try {
-      const { users } = await api('/api/admin/users'); $('#users-total').textContent = `${users.length} usuarios`;
-      output.innerHTML = users.length ? `<table><thead><tr><th>Usuario</th><th>Correo</th><th>Cuenta</th><th>Actividad</th><th>Saldo</th><th>Proyectos</th><th>Ajuste de créditos</th><th>Moderación</th></tr></thead><tbody>${users.map(user => `<tr><td><strong>${esc(user.username)}</strong><div class="muted" style="font-size:10px">${esc(user.id)}<br>Firebase UID: ${esc(user.firebase_uid || 'sin vincular')}</div></td><td>${esc(user.email)}</td><td>${Number(user.is_premium) === 1 ? '<span class="status good">Premium</span>' : '<span class="status">Estándar</span>'}<br>${Number(user.is_banned) === 1 ? '<span class="status bad">Suspendida</span>' : '<span class="status good">Activa</span>'}${user.ban_reason ? `<p class="muted">${esc(user.ban_reason)}</p>` : ''}</td><td>${esc(user.last_active_at ? new Date(user.last_active_at).toLocaleString() : 'Sin actividad')}</td><td><strong>${Number(user.credits || 0)}</strong></td><td>${Number(user.project_count || 0)} proyectos<br>${Number(user.export_count || 0)} exportaciones</td><td><div class="credit-editor"><input type="number" min="-10000" max="10000" value="0" aria-label="Ajuste de créditos" data-credit-delta="${esc(user.id)}"><button class="small" data-adjust-user="${esc(user.id)}">Aplicar</button></div><input type="text" value="Ajuste admin" maxlength="200" data-credit-note="${esc(user.id)}" style="font-size:11px;margin-top:6px;padding:7px"></td><td><div class="admin-action-row"><button class="small" data-activity-user="${esc(user.id)}">Actividad</button><button class="small ${Number(user.is_banned) === 1 ? '' : 'danger'}" data-ban-user="${esc(user.id)}" data-banned="${Number(user.is_banned) === 1 ? '1' : '0'}">${Number(user.is_banned) === 1 ? 'Reactivar' : 'Suspender'}</button></div></td></tr>`).join('')}</tbody></table>` : '<div class="empty-state">Todavía no hay usuarios.</div>';
+      const { users = [] } = await api('/api/admin/users'); $('#users-total').textContent = `${users.length} usuarios`;
+      output.innerHTML = users.length ? `<table><thead><tr><th>Usuario</th><th>Correo</th><th>Cuenta</th><th>Actividad</th><th>Saldo</th><th>Proyectos</th><th>Ajuste de créditos</th><th>Moderación</th></tr></thead><tbody>${users.map(user => {
+        const isBanned=Number(user.is_banned)===1;
+        const premium=premiumIsActive(user);
+        return `<tr><td><strong>${esc(user.username)}</strong><div class="muted" style="font-size:10px">${esc(user.id)}<br>Firebase UID: ${esc(user.firebase_uid || 'sin vincular')}</div></td><td>${esc(user.email)}</td><td>${premium ? '<span class="status good">Premium</span>' : (Number(user.is_premium)===1?'<span class="status">Premium vencido</span>':'<span class="status">Estándar</span>')}<br>${formatBanState(user)}${user.ban_reason ? `<p class="muted">Motivo: ${esc(user.ban_reason)}</p>` : ''}${user.premium_expires_at && premium ? `<p class="muted">Premium hasta ${esc(new Date(user.premium_expires_at).toLocaleString())}</p>` : ''}</td><td>${esc(user.last_active_at ? new Date(user.last_active_at).toLocaleString() : 'Sin actividad')}</td><td><strong>${Number(user.credits || 0)}</strong></td><td>${Number(user.project_count || 0)} proyectos<br>${Number(user.export_count || 0)} exportaciones</td><td><div class="credit-editor"><input type="number" min="-10000" max="10000" value="0" aria-label="Ajuste de créditos" data-credit-delta="${esc(user.id)}"><button class="small" data-adjust-user="${esc(user.id)}">Aplicar</button></div><input type="text" value="Ajuste admin" maxlength="200" data-credit-note="${esc(user.id)}" style="font-size:11px;margin-top:6px;padding:7px"></td><td><div class="admin-action-row"><button class="small" data-activity-user="${esc(user.id)}">Actividad</button><button class="small ${isBanned ? '' : 'danger'}" data-ban-user="${esc(user.id)}" data-banned="${isBanned ? '1' : '0'}">${isBanned ? 'Desbanear' : 'Suspender'}</button>${premium?`<button class="small danger" data-revoke-premium="${esc(user.id)}">Quitar Premium</button>`:''}</div></td></tr>`;
+      }).join('')}</tbody></table>` : '<div class="empty-state">Todavía no hay usuarios.</div>';
       $$('[data-adjust-user]').forEach(button => button.addEventListener('click', async () => {
         const id = button.dataset.adjustUser; const delta = Number($(`[data-credit-delta="${CSS.escape(id)}"]`)?.value); const note = $(`[data-credit-note="${CSS.escape(id)}"]`)?.value || 'Ajuste manual';
         if (!Number.isInteger(delta) || delta === 0) { notice('Introduce un ajuste entero distinto de cero.'); return; }
@@ -70,14 +127,20 @@
       }));
       $$('[data-activity-user]').forEach(button => button.addEventListener('click', () => { const user = users.find(item => item.id === button.dataset.activityUser); if (user) showActivity(user); }));
       $$('[data-ban-user]').forEach(button => button.addEventListener('click', async () => {
-        const id = button.dataset.banUser; const isBanned = button.dataset.banned === '1';
-        const reason = isBanned ? '' : (prompt('Motivo de la suspensión (visible solo para administración):', 'Incumplimiento de las normas') || '').trim();
-        if (!isBanned && !reason) { notice('Escribe un motivo para suspender la cuenta.'); return; }
-        const action = isBanned ? 'reactivar' : 'suspender';
-        if (!confirm(`¿Quieres ${action} a ${users.find(item => item.id === id)?.username || id}?`)) return;
-        button.disabled = true;
-        try { await api(`/api/admin/users/${encodeURIComponent(id)}/ban`, { method: 'POST', body: JSON.stringify({ banned: !isBanned, reason }) }); notice(isBanned ? 'Cuenta reactivada.' : 'Cuenta suspendida.'); await loadUsers(); }
-        catch (error) { notice(error.message); } finally { button.disabled = false; }
+        const id=button.dataset.banUser; const isBanned=button.dataset.banned==='1';
+        if(!isBanned){const user=users.find(item=>item.id===id);if(user)openSuspensionModal(user);return;}
+        const user=users.find(item=>item.id===id);
+        if(!confirm(`¿Reactivar la cuenta de ${user?.username||id} inmediatamente?`))return;
+        button.disabled=true;
+        try{await api(`/api/admin/users/${encodeURIComponent(id)}/ban`,{method:'POST',body:JSON.stringify({banned:false})});notice('Cuenta reactivada.');await loadUsers();}
+        catch(error){notice(error.message);}finally{button.disabled=false;}
+      }));
+      $$('[data-revoke-premium]').forEach(button => button.addEventListener('click',async()=>{
+        const id=button.dataset.revokePremium;const user=users.find(item=>item.id===id);
+        if(!confirm(`¿Quitar Premium a ${user?.username||id}? Se intentará cancelar también su suscripción PayPal activa.`))return;
+        button.disabled=true;
+        try{const result=await api(`/api/admin/users/${encodeURIComponent(id)}/revoke-premium`,{method:'POST',body:JSON.stringify({})});notice(result.warning||`Premium revocado para ${user?.username||id}.`);await loadUsers();}
+        catch(error){notice(error.message);}finally{button.disabled=false;}
       }));
     } catch (error) { output.innerHTML = `<div class="empty-state">${esc(error.message)}</div>`; }
   }

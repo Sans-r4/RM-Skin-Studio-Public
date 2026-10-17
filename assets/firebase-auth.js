@@ -41,6 +41,7 @@
     if (!response.ok) {
       const e = new Error(data.error || `Error HTTP ${response.status}`);
       e.status = response.status;
+      e.payload = data;
       throw e;
     }
     return data;
@@ -97,7 +98,15 @@
       const stored = (() => { try { return localStorage.getItem('rm_pending_username') || ''; } catch { return ''; } })();
       const username = sanitizeUsername(requestedUsername || stored || user.displayName || (user.email || '').split('@')[0]);
       const token = await user.getIdToken(true);
-      const data = await post('/api/auth/bootstrap', { username, preflightTicket: options.preflightTicket || '' }, token);
+      let data;
+      try {
+        data = await post('/api/auth/bootstrap', { username, preflightTicket: options.preflightTicket || '' }, token);
+      } catch (error) {
+        if (error.status === 403 && String(error.payload?.error || '').toLowerCase() === 'account suspended') {
+          window.dispatchEvent(new CustomEvent('rmss:account-suspended', { detail: error.payload }));
+        }
+        throw error;
+      }
       try { localStorage.removeItem('rm_pending_username'); } catch {}
       return data.user;
     })();

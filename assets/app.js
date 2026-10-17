@@ -21,6 +21,28 @@
     window.__rmToastTimer = setTimeout(() => node.classList.add('hidden'), ms);
   }
 
+  function showSuspensionDialog(message) {
+    return new Promise(resolve => {
+      const old = document.getElementById('rmss-suspension-dialog'); old?.remove();
+      const dialog = document.createElement('dialog'); dialog.id = 'rmss-suspension-dialog'; dialog.className = 'rmss-ban-dialog';
+      const heading = document.createElement('h2'); heading.textContent = 'Cuenta suspendida';
+      const copy = document.createElement('p'); copy.textContent = String(message || 'Esta cuenta no puede utilizar RM Skin Studio mientras la suspensión esté activa.').replace(/^Account suspended:?\s*/i, '') || 'Esta cuenta no puede utilizar RM Skin Studio mientras la suspensión esté activa.';
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'primary'; button.textContent = 'Entendido';
+      dialog.append(heading, copy, button); document.body.appendChild(dialog);
+      let done = false; const finish = () => { if (done) return; done = true; try { dialog.close(); } catch {} dialog.remove(); resolve(); };
+      button.addEventListener('click', finish); dialog.addEventListener('cancel', event => { event.preventDefault(); finish(); });
+      if (typeof dialog.showModal === 'function') dialog.showModal(); else { alert(`${heading.textContent}\n\n${copy.textContent}`); finish(); }
+    });
+  }
+  window.addEventListener('rmss:account-suspended', event => {
+    const data = event.detail || {};
+    const details = [];
+    if (data.reason) details.push(`Motivo: ${data.reason}`);
+    if (data.banned_until) details.push(`La suspensión termina: ${new Date(data.banned_until).toLocaleString()}`);
+    else details.push('Duración: indefinida');
+    handleSuspended(`Account suspended${details.length ? `: ${details.join(' · ')}` : ''}`);
+  });
+
   async function handleSuspended(message = 'Account suspended') {
     if (suspendHandling) return;
     suspendHandling = true;
@@ -30,7 +52,7 @@
     document.body.classList.remove('rmss-premium');
     $$('.ad-slot').forEach(slot => { slot.hidden = true; slot.replaceChildren(); });
     window.dispatchEvent(new CustomEvent('rmss:user-state', { detail: { user: null, suspended: true } }));
-    alert(`${window.RMSSLanguage?.t('Account suspended') || 'Account suspended'}${message && message !== 'Account suspended' ? `: ${message.replace(/^Account suspended:?\s*/i, '')}` : ''}`);
+    await showSuspensionDialog(message);
     if (page === 'home') {
       $('#app-screen')?.classList.add('hidden');
       $('#auth-screen')?.classList.remove('hidden');
@@ -52,8 +74,16 @@
     const type = response.headers.get('content-type') || '';
     if (!response.ok) {
       let msg = `Request failed (${response.status})`;
-      if (type.includes('application/json')) { const obj = await response.json().catch(() => ({})); msg = obj.error || msg; }
-      else msg = await response.text().catch(() => msg) || msg;
+      if (type.includes('application/json')) {
+        const obj = await response.json().catch(() => ({})); msg = obj.error || msg;
+        if (response.status === 403 && /^account suspended$/i.test(String(obj.error||''))) {
+          const details=[];
+          if (obj.reason) details.push(`Motivo: ${obj.reason}`);
+          if (obj.banned_until) details.push(`La suspensión termina: ${new Date(obj.banned_until).toLocaleString()}`);
+          else details.push('Duración: indefinida');
+          if (details.length) msg += `: ${details.join(' · ')}`;
+        }
+      } else msg = await response.text().catch(() => msg) || msg;
       const error = new Error(msg); error.status = response.status;
       if (response.status === 403 && /account suspended/i.test(msg)) await handleSuspended(msg);
       throw error;
